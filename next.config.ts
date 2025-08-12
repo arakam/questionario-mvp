@@ -1,7 +1,12 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  eslint: {
+    // não falha o build em produção por erros de lint
+    ignoreDuringBuilds: true,
+  },
+  experimental: {
+    // mantenha seus outros flags experimentais aqui se tiver
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

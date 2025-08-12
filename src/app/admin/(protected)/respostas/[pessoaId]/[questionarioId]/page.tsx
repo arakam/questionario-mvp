@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { supabaseAdminOnly } from '@/lib/supabaseAdminOnly';
 import { getSessionAndAdmin } from '@/lib/isAdmin';
 
@@ -103,7 +104,7 @@ export default async function RespostasDetalhePage({
         </table>
       </div>
 
-      <a className="underline text-sm" href="/admin/respostas">← Voltar</a>
+      <Link className="underline text-sm" href="/admin/respostas">← Voltar</Link>
     </div>
   );
 }
