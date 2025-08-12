@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { createSupabaseServer } from '@/lib/supabaseServer';
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -14,6 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/categorias">Categorias</Link>
           <Link href="/admin/perguntas">Perguntas</Link>
           <Link href="/admin/questionarios">Questionários</Link>
+          <Link href="/admin/importar">Importar</Link>
+          <Link href="/admin/respostas">Respostas</Link>
         </nav>
         <form action="/admin/logout" method="post" className="pt-4">
           {user && <button className="text-xs underline">Sair ({user.email})</button>}
