@@ -4,6 +4,38 @@ import { getSessionAndAdmin } from '@/lib/isAdmin';
 
 export const dynamic = 'force-dynamic';
 
+/** Tipos das entidades */
+type Pessoa = {
+  id: string;
+  nome: string;
+  email: string;
+  cnpj: string;
+  empresa: string | null;
+};
+
+type Questionario = {
+  id: string;
+  nome: string;
+  slug: string;
+};
+
+type Pergunta = {
+  id: string;
+  texto: string;
+  peso: number;
+};
+
+type QPRow = {
+  pergunta_id: string;
+  perguntas: Pergunta; // join !inner
+};
+
+type RespostaRow = {
+  pergunta_id: string;
+  resposta: boolean;
+  respondido_em: string | null;
+};
+
 export default async function RespostasDetalhePage({
   params,
 }: {
@@ -15,37 +47,42 @@ export default async function RespostasDetalhePage({
   const { pessoaId, questionarioId } = await params;
   const admin = supabaseAdminOnly();
 
+  // pessoa + questionário
   const [{ data: pessoa, error: e1 }, { data: q, error: e2 }] = await Promise.all([
-    admin.from('pessoas').select('id, nome, email, cnpj, empresa').eq('id', pessoaId).single(),
-    admin.from('questionarios').select('id, nome, slug').eq('id', questionarioId).single(),
+    admin.from('pessoas').select('id, nome, email, cnpj, empresa').eq('id', pessoaId).single<Pessoa>(),
+    admin.from('questionarios').select('id, nome, slug').eq('id', questionarioId).single<Questionario>(),
   ]);
 
   if (e1) return <div className="p-6 text-red-600">Erro: {e1.message}</div>;
   if (e2) return <div className="p-6 text-red-600">Erro: {e2.message}</div>;
   if (!pessoa || !q) return <div className="p-6">Dados não encontrados.</div>;
 
+  // perguntas do questionário + respostas da pessoa
   const [{ data: qps, error: e3 }, { data: resp, error: e4 }] = await Promise.all([
     admin
       .from('questionario_perguntas')
       .select('pergunta_id, perguntas!inner(id, texto, peso)')
-      .eq('questionario_id', questionarioId),
+      .eq('questionario_id', questionarioId)
+      .returns<QPRow[]>(), // tipa o array
     admin
       .from('respostas')
       .select('pergunta_id, resposta, respondido_em')
       .eq('pessoa_id', pessoaId)
-      .eq('questionario_id', questionarioId),
+      .eq('questionario_id', questionarioId)
+      .returns<RespostaRow[]>(),
   ]);
 
   if (e3) return <div className="p-6 text-red-600">Erro: {e3.message}</div>;
   if (e4) return <div className="p-6 text-red-600">Erro: {e4.message}</div>;
 
-  const perguntas = (qps ?? []).map((x: any) => x.perguntas);
+  const perguntas: Pergunta[] = (qps ?? []).map((x) => x.perguntas);
+
   const mapResp = new Map<string, { resposta: boolean; respondido_em: string | null }>();
   for (const r of (resp ?? [])) {
-    mapResp.set(r.pergunta_id, { resposta: r.resposta, respondido_em: r.respondido_em ?? null });
+    mapResp.set(r.pergunta_id, { resposta: r.resposta, respondido_em: r.respondido_em });
   }
 
-  const itens = perguntas.map((p: any) => {
+  const itens = perguntas.map((p) => {
     const r = mapResp.get(p.id);
     return {
       pergunta_id: p.id,
@@ -56,7 +93,7 @@ export default async function RespostasDetalhePage({
     };
   });
 
-  const respondidas = itens.filter(i => i.resposta !== null).length;
+  const respondidas = itens.filter((i) => i.resposta !== null).length;
   const total = itens.length;
   const pct = total ? Math.round((respondidas / total) * 100) : 0;
 
