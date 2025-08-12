@@ -1,34 +1,45 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  const PUBLIC_ADMIN_PATHS = new Set([
+  // Rotas públicas do admin (não exigem sessão)
+  const PUBLIC_ADMIN_PATHS = new Set<string>([
     '/admin/login',
-    '/admin/login/action',   // <- liberar o POST do login
+    '/admin/login/action',
   ]);
 
-  // só protege /admin, EXCETO as rotas públicas acima
-  if (req.nextUrl.pathname.startsWith('/admin') && !PUBLIC_ADMIN_PATHS.has(req.nextUrl.pathname)) {
+  const pathname = req.nextUrl.pathname;
+
+  if (pathname.startsWith('/admin') && !PUBLIC_ADMIN_PATHS.has(pathname)) {
+    // Adapter de cookies no formato esperado pelo @supabase/ssr
+    const cookieMethods = {
+      get(name: string) {
+        return req.cookies.get(name)?.value;
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        // escreve no response para o navegador receber
+        res.cookies.set({ name, value, ...options });
+      },
+      remove(name: string, options: CookieOptions) {
+        res.cookies.set({ name, value: '', ...options, maxAge: 0 });
+      },
+    } as unknown as NonNullable<Parameters<typeof createServerClient>[2]>['cookies'];
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get: (name: string) => req.cookies.get(name)?.value,
-          set: (name: string, value: string, options: any) => res.cookies.set({ name, value, ...options }),
-          remove: (name: string, options: any) => res.cookies.set({ name, value: '', ...options, maxAge: 0 })
-        }
-      }
+      { cookies: cookieMethods }
     );
 
     const { data } = await supabase.auth.getUser();
+
     if (!data.user) {
       const url = req.nextUrl.clone();
       url.pathname = '/admin/login';
-      url.searchParams.set('redirect', req.nextUrl.pathname);
+      url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
   }
