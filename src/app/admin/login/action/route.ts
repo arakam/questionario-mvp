@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { getBaseUrl } from '@/lib/urlUtils';
 
 // Força o uso do Node.js runtime para evitar problemas com Edge Runtime
 export const runtime = 'nodejs';
@@ -112,17 +111,15 @@ export async function POST(req: NextRequest) {
 
     // Login e verificação de admin bem-sucedidos
     console.log('Login bem-sucedido para:', email);
-    const baseUrl = getBaseUrl();
     console.log('🔍 Debug redirecionamento:', { 
       originalRedirect: redirect, 
       sanitizedRedirect: redirect,
-      baseUrl,
-      finalUrl: `${baseUrl}${redirect}`
+      redirectPath: redirect
     });
     
-    // Cria resposta de redirecionamento usando URL base correta
-    const finalUrl = `${baseUrl}${redirect}`;
-    const res = NextResponse.redirect(finalUrl);
+    // Cria resposta de redirecionamento usando caminho relativo
+    // O Next.js vai redirecionar para o domínio correto automaticamente
+    const res = NextResponse.redirect(redirect);
     
     // O Supabase já gerencia os cookies automaticamente
     // Não precisamos aplicar cookies manualmente
