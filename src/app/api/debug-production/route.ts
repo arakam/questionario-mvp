@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     );
 
     // Tenta verificar a sessão atual
-    let sessionInfo = { hasSession: false, userEmail: null, error: null };
+    let sessionInfo = { hasSession: false, userEmail: null as string | null, error: null as string | null };
     try {
       const supabase = await createSupabaseServer();
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       if (user && !error) {
         sessionInfo = {
           hasSession: true,
-          userEmail: user.email,
+          userEmail: user.email || null,
           error: null
         };
       } else {
