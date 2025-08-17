@@ -11,11 +11,6 @@ export default async function AdminLayout({
   
   if (!isAdmin || !user) {
     // Redireciona para login se não for admin
-    const redirectUrl = new URL('/admin/login', 'http://localhost');
-    redirectUrl.searchParams.set('error', 'Acesso negado');
-    redirectUrl.searchParams.set('redirect', '/admin');
-    
-    // Em produção, você pode usar redirect() do Next.js
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

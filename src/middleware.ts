@@ -37,6 +37,7 @@ export async function middleware(req: NextRequest) {
       const url = req.nextUrl.clone();
       url.pathname = '/admin/login';
       url.searchParams.set('redirect', pathname + (req.nextUrl.search ?? ''));
+      // Usa redirecionamento relativo para evitar problemas de domínio
       return NextResponse.redirect(url);
     }
 
@@ -48,19 +49,21 @@ export async function middleware(req: NextRequest) {
         .eq('email', data.user.email)
         .limit(1);
       
-      if (!adminData || adminData.length === 0) {
-        const url = req.nextUrl.clone();
-        url.pathname = '/admin/login';
-        url.searchParams.set('error', 'Acesso negado');
-        return NextResponse.redirect(url);
-      }
-    } catch (adminError) {
-      // Se não conseguir verificar admin, redireciona para login
-      const url = req.nextUrl.clone();
-      url.pathname = '/admin/login';
-      url.searchParams.set('error', 'Erro de verificação');
-      return NextResponse.redirect(url);
-    }
+             if (!adminData || adminData.length === 0) {
+         const url = req.nextUrl.clone();
+         url.pathname = '/admin/login';
+         url.searchParams.set('error', 'Acesso negado');
+         // Garante que o redirecionamento seja relativo ao domínio atual
+         return NextResponse.redirect(url);
+       }
+         } catch (adminError) {
+       // Se não conseguir verificar admin, redireciona para login
+       const url = req.nextUrl.clone();
+       url.pathname = '/admin/login';
+       url.searchParams.set('error', 'Erro de verificação');
+       // Garante que o redirecionamento seja relativo ao domínio atual
+       return NextResponse.redirect(url);
+     }
   }
 
   return res;

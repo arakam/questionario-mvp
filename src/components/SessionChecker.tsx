@@ -12,11 +12,12 @@ export default function SessionChecker() {
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       
-      if (!session || error) {
-        // Se não há sessão, redireciona para login
-        router.push('/admin/login?error=Sessão expirada');
-        return;
-      }
+             if (!session || error) {
+         // Se não há sessão, redireciona para login
+         // Usa replace para evitar problemas de histórico
+         router.replace('/admin/login?error=Sessão expirada');
+         return;
+       }
 
       // Verifica se o usuário é admin
       try {
@@ -26,16 +27,16 @@ export default function SessionChecker() {
           .eq('email', session.user.email)
           .limit(1);
 
-        if (adminError || !adminData || adminData.length === 0) {
-          // Se não é admin, redireciona para login
-          router.push('/admin/login?error=Acesso negado');
-          return;
-        }
-      } catch (error) {
-        // Se há erro na verificação, redireciona para login
-        router.push('/admin/login?error=Erro de verificação');
-        return;
-      }
+                 if (adminError || !adminData || adminData.length === 0) {
+           // Se não é admin, redireciona para login
+           router.replace('/admin/login?error=Acesso negado');
+           return;
+         }
+             } catch (error) {
+         // Se há erro na verificação, redireciona para login
+         router.replace('/admin/login?error=Erro de verificação');
+         return;
+       }
     };
 
     // Verifica a sessão imediatamente
@@ -43,11 +44,11 @@ export default function SessionChecker() {
 
     // Configura listener para mudanças na autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
-          router.push('/admin/login?error=Sessão expirada');
-        }
-      }
+             async (event, session) => {
+         if (event === 'SIGNED_OUT' || !session) {
+           router.replace('/admin/login?error=Sessão expirada');
+         }
+       }
     );
 
     // Cleanup do listener
