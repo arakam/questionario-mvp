@@ -8,24 +8,29 @@
 export function getBaseUrl(): string {
   // Em produção, usa a variável de ambiente ou detecta automaticamente
   if (process.env.NEXT_PUBLIC_SITE_URL) {
+    console.log('🔍 getBaseUrl: Usando NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL);
     return process.env.NEXT_PUBLIC_SITE_URL;
   }
   
   // Fallback para desenvolvimento
   if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 getBaseUrl: Modo development, usando localhost:3008');
     return 'http://localhost:3008';
   }
   
   // Em produção, tenta detectar automaticamente
   if (typeof window !== 'undefined') {
     // Cliente: usa a URL atual
+    console.log('🔍 getBaseUrl: Cliente, usando window.location.origin:', window.location.origin);
     return window.location.origin;
   }
   
   // Servidor: usa a variável de ambiente ou fallback
+  const fallbackUrl = 'https://inquiro.unityerp.app';
+  console.log('🔍 getBaseUrl: Servidor, usando fallback:', fallbackUrl);
   return process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_SITE_URL || 'https://inquiro.unityerp.app'; // Fallback para seu domínio
+    : fallbackUrl;
 }
 
 /**
@@ -39,12 +44,12 @@ export function createSafeRedirectUrl(path: string, baseUrl?: string): string {
   
   // Em desenvolvimento, usa localhost
   if (process.env.NODE_ENV === 'development') {
-    console.log('Acessou como development');
-
+    console.log('🔍 createSafeRedirectUrl: Modo development, usando localhost:3008');
     return `http://localhost:3008${safePath}`;
   }
   
   // Em produção, usa a URL base
+  console.log('🔍 createSafeRedirectUrl: Modo produção, usando base:', base);
   return `${base}${safePath}`;
 }
 
