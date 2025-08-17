@@ -25,7 +25,7 @@ export function getBaseUrl(): string {
   // Servidor: usa a variável de ambiente ou fallback
   return process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_SITE_URL || 'https://inquito.unityerp.app'; // Fallback para seu domínio
+    : process.env.NEXT_PUBLIC_SITE_URL || 'https://inquiro.unityerp.app'; // Fallback para seu domínio
 }
 
 /**

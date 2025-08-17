@@ -5,7 +5,7 @@
 ### **Situação:**
 - ✅ **Login funciona** (autenticação bem-sucedida)
 - ❌ **Redirecionamento incorreto**: vai para `https://localhost:3008/admin`
-- 🎯 **Deveria ir para**: `https://inquito.unityerp.app/admin`
+- 🎯 **Deveria ir para**: `https://inquiro.unityerp.app/admin`
 
 ### **Causa Raiz:**
 O sistema estava usando `req.url` para construir URLs de redirecionamento, que em produção continha `localhost` em vez do domínio real.
@@ -55,7 +55,7 @@ export function getBaseUrl(): string {
   // 4. Servidor: Vercel ou domínio padrão
   return process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}`
-    : 'https://inquito.unityerp.app';
+    : 'https://inquiro.unityerp.app';
 }
 ```
 
@@ -66,7 +66,7 @@ export function getBaseUrl(): string {
 #### **Na sua VPS, crie/edite o arquivo `.env.production`:**
 ```bash
 # URL do site em produção
-NEXT_PUBLIC_SITE_URL=https://inquito.unityerp.app
+NEXT_PUBLIC_SITE_URL=https://inquiro.unityerp.app
 
 # Outras variáveis necessárias
 NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
@@ -75,7 +75,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_do_supabase
 
 #### **Ou configure no sistema:**
 ```bash
-export NEXT_PUBLIC_SITE_URL=https://inquito.unityerp.app
+export NEXT_PUBLIC_SITE_URL=https://inquiro.unityerp.app
 ```
 
 ### **2. Reinicie o Servidor**
@@ -89,13 +89,13 @@ npm start
 ```
 
 ### **3. Teste o Login**
-1. Acesse `https://inquito.unityerp.app/admin/login`
+1. Acesse `https://inquiro.unityerp.app/admin/login`
 2. Digite suas credenciais
 3. **Verifique os logs** para ver:
    ```
    🔍 Debug redirecionamento: {
-     baseUrl: 'https://inquito.unityerp.app',
-     finalUrl: 'https://inquito.unityerp.app/admin'
+     baseUrl: 'https://inquiro.unityerp.app',
+     finalUrl: 'https://inquiro.unityerp.app/admin'
    }
    ```
 
@@ -104,10 +104,10 @@ npm start
 ### **Se Funcionar:**
 ```
 🔍 Debug redirecionamento: {
-  baseUrl: 'https://inquito.unityerp.app',
-  finalUrl: 'https://inquito.unityerp.app/admin'
+  baseUrl: 'https://inquiro.unityerp.app',
+  finalUrl: 'https://inquiro.unityerp.app/admin'
 }
-✅ Redirecionamento criado: https://inquito.unityerp.app/admin
+✅ Redirecionamento criado: https://inquiro.unityerp.app/admin
 ```
 
 ### **Se Ainda Falhar:**
