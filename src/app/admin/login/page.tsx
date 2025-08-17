@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string; redirect?: string };
+  searchParams: Promise<{ error?: string; redirect?: string }>;
 }) {
-  const { error, redirect } = searchParams;
+  const { error, redirect } = await searchParams;
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-orange-50 py-12 px-4 sm:px-6 lg:px-8">

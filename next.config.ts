@@ -31,6 +31,18 @@ const nextConfig = {
       },
     ];
   },
+  // Configurações para resolver warnings do Supabase
+  webpack: (config, { isServer }) => {
+    // Suprime o warning do Supabase Realtime
+    config.ignoreWarnings = [
+      {
+        module: /@supabase\/realtime-js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+    
+    return config;
+  },
 };
 
 module.exports = nextConfig;
