@@ -32,19 +32,19 @@ export async function GET(req: NextRequest) {
     let sessionInfo = { hasSession: false, userEmail: null, error: null };
     try {
       const supabase = await createSupabaseServer();
-      const { data: { session }, error } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
       
-      if (session && !error) {
+      if (user && !error) {
         sessionInfo = {
           hasSession: true,
-          userEmail: session.user.email,
+          userEmail: user.email,
           error: null
         };
       } else {
         sessionInfo = {
           hasSession: false,
           userEmail: null,
-          error: error?.message || 'Sem sessão'
+          error: error?.message || 'Sem usuário'
         };
       }
     } catch (sessionError) {
