@@ -10,15 +10,16 @@ export default function SessionChecker() {
   const supabase = createClient();
   const isChecking = useRef(false);
   const lastCheck = useRef(0);
+  const hasValidSession = useRef(false);
 
   useEffect(() => {
     const checkSession = async () => {
       // Evita verificações simultâneas
       if (isChecking.current) return;
       
-      // Evita verificações muito frequentes (mínimo 5 segundos entre verificações)
+      // Evita verificações muito frequentes (mínimo 10 segundos entre verificações)
       const now = Date.now();
-      if (now - lastCheck.current < 5000) return;
+      if (now - lastCheck.current < 10000) return;
       
       isChecking.current = true;
       lastCheck.current = now;
@@ -28,11 +29,18 @@ export default function SessionChecker() {
         
         if (!session || error) {
           console.log('🔍 SessionChecker: Sessão inválida, redirecionando para login');
+          hasValidSession.current = false;
           router.replace('/admin/login?error=Sessão expirada');
           return;
         }
 
-        // Verifica se o usuário é admin apenas se necessário
+        // Se já temos uma sessão válida, não verifica admin novamente
+        if (hasValidSession.current) {
+          console.log('✅ SessionChecker: Sessão já validada, pulando verificação de admin');
+          return;
+        }
+
+        // Verifica se o usuário é admin apenas uma vez
         try {
           const { data: adminData, error: adminError } = await supabase
             .from('admins')
@@ -42,14 +50,16 @@ export default function SessionChecker() {
 
           if (adminError || !adminData || adminData.length === 0) {
             console.log('🔍 SessionChecker: Usuário não é admin, redirecionando');
+            hasValidSession.current = false;
             router.replace('/admin/login?error=Acesso negado');
             return;
           }
           
           console.log('✅ SessionChecker: Sessão válida e usuário é admin');
+          hasValidSession.current = true;
         } catch (error) {
           console.error('❌ SessionChecker: Erro ao verificar admin:', error);
-          // Não redireciona imediatamente por erro de verificação
+          // Não redireciona por erro de verificação
           // Permite que o usuário continue navegando
         }
       } catch (error) {
@@ -70,9 +80,11 @@ export default function SessionChecker() {
         
         if (event === 'SIGNED_OUT' || !session) {
           console.log('🔍 SessionChecker: Usuário deslogado, redirecionando');
+          hasValidSession.current = false;
           router.replace('/admin/login?error=Sessão expirada');
         } else if (event === 'SIGNED_IN') {
           console.log('✅ SessionChecker: Usuário logado com sucesso');
+          hasValidSession.current = false; // Reset para verificar admin novamente
         }
       }
     );
@@ -82,7 +94,7 @@ export default function SessionChecker() {
   }, [router, supabase]);
 
   // Não verifica a cada mudança de rota
-  // Apenas monitora mudanças de autenticação
+  // Apenas monitora mudanças reais de autenticação
 
   return null; // Este componente não renderiza nada
 }

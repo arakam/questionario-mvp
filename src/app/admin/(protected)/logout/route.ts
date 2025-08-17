@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { getBaseUrl } from '@/lib/urlUtils';
 
 // Força o uso do Node.js runtime para evitar problemas com Edge Runtime
 export const runtime = 'nodejs';
@@ -34,8 +35,11 @@ export async function GET(req: NextRequest) {
   // Encerra a sessão (o Supabase vai ajustar os cookies via cookieMethods acima)
   await supabase.auth.signOut();
 
-  // Cria resposta de redirecionamento
-  const res = NextResponse.redirect(new URL('/admin/login', req.url));
+  // Cria resposta de redirecionamento usando URL base correta
+  const baseUrl = getBaseUrl();
+  const loginUrl = `${baseUrl}/admin/login`;
+  console.log('🔍 Logout: Redirecionando para:', loginUrl);
+  const res = NextResponse.redirect(loginUrl);
   
   // Remove explicitamente os cookies de autenticação do Supabase
   const supabaseCookies = [
