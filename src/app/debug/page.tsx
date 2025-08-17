@@ -98,6 +98,16 @@ export default function DebugPage() {
     }
   };
 
+  const testProduction = async () => {
+    try {
+      const response = await fetch('/api/debug-production');
+      const data = await response.json();
+      setResult({ type: 'production', data });
+    } catch (error) {
+      setResult({ type: 'production', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -204,35 +214,51 @@ export default function DebugPage() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mt-8">
-          {/* Teste de Redirecionamento */}
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4">🔄 Teste de Redirecionamento</h2>
-            <button 
-              onClick={testRedirect}
-              className="btn-primary w-full mb-4"
-            >
-              Testar Redirecionamento
-            </button>
-            <p className="text-xs text-gray-500">
-              Testa se o redirecionamento está funcionando
-            </p>
-          </div>
+                 <div className="grid md:grid-cols-2 gap-8 mt-8">
+           {/* Teste de Redirecionamento */}
+           <div className="card">
+             <h2 className="text-xl font-semibold mb-4">🔄 Teste de Redirecionamento</h2>
+             <button 
+               onClick={testRedirect}
+               className="btn-primary w-full mb-4"
+             >
+               Testar Redirecionamento
+             </button>
+             <p className="text-xs text-gray-500">
+               Testa se o redirecionamento está funcionando
+             </p>
+           </div>
 
-          {/* Teste de Cookies */}
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4">🍪 Teste de Cookies</h2>
-            <button 
-              onClick={testCookies}
-              className="btn-primary w-full mb-4"
-            >
-              Verificar Cookies
-            </button>
-            <p className="text-xs text-gray-500">
-              Verifica os cookies de autenticação
-            </p>
-          </div>
-        </div>
+           {/* Teste de Cookies */}
+           <div className="card">
+             <h2 className="text-xl font-semibold mb-4">🍪 Teste de Cookies</h2>
+             <button 
+               onClick={testCookies}
+               className="btn-primary w-full mb-4"
+             >
+               Verificar Cookies
+             </button>
+             <p className="text-xs text-gray-500">
+               Verifica os cookies de autenticação
+             </p>
+           </div>
+         </div>
+
+         <div className="grid md:grid-cols-2 gap-8 mt-8">
+           {/* Teste de Produção */}
+           <div className="card">
+             <h2 className="text-xl font-semibold mb-4">🚀 Debug de Produção</h2>
+             <button 
+               onClick={testProduction}
+               className="btn-primary w-full mb-4"
+             >
+               Debug Produção
+             </button>
+             <p className="text-xs text-gray-500">
+               Debug específico para problemas de produção
+             </p>
+           </div>
+         </div>
 
         {/* Resultados */}
         {result && (
