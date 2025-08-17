@@ -39,6 +39,8 @@ export function createSafeRedirectUrl(path: string, baseUrl?: string): string {
   
   // Em desenvolvimento, usa localhost
   if (process.env.NODE_ENV === 'development') {
+    console.log('Acessou como development');
+
     return `http://localhost:3008${safePath}`;
   }
   
