@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function POST(req: NextRequest) {
-  // Redireciona para a tela de login após sair
-  const res = NextResponse.redirect(new URL('/admin/login', req.url));
-
+export async function GET(req: NextRequest) {
   // Store de cookies no contexto do Route Handler
   const cookieStore = await cookies();
 
@@ -33,6 +30,29 @@ export async function POST(req: NextRequest) {
 
   // Encerra a sessão (o Supabase vai ajustar os cookies via cookieMethods acima)
   await supabase.auth.signOut();
+
+  // Cria resposta de redirecionamento
+  const res = NextResponse.redirect(new URL('/admin/login', req.url));
+  
+  // Remove explicitamente os cookies de autenticação do Supabase
+  const supabaseCookies = [
+    'sb-access-token',
+    'sb-refresh-token',
+    'supabase-auth-token'
+  ];
+  
+  supabaseCookies.forEach(cookieName => {
+    res.cookies.set({
+      name: cookieName,
+      value: '',
+      maxAge: 0,
+      expires: new Date(0),
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+  });
 
   return res;
 }

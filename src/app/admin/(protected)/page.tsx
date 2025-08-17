@@ -64,7 +64,7 @@ export default async function AdminDashboard() {
     },
     {
       title: 'Nova Pergunta',
-      description: 'Adicionar uma nova pergunta ao sistema',
+      description: 'Adicionar uma nova pergunta ao Inquiro',
       icon: '❓',
       href: '/admin/perguntas/nova',
       color: 'from-orange-500 to-orange-600'
@@ -83,10 +83,10 @@ export default async function AdminDashboard() {
       {/* Welcome Header */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          🎉 Bem-vindo ao Painel Administrativo
+          🎉 Bem-vindo ao Inquiro
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Gerencie seus questionários, categorias e perguntas de forma simples e eficiente
+          Gerencie seus questionários, categorias e perguntas de forma simples e eficiente com o Inquiro
         </p>
       </div>
 
@@ -136,12 +136,12 @@ export default async function AdminDashboard() {
       {/* Recent Activity */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          📊 Visão Geral do Sistema
+          📊 Visão Geral do Inquiro
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Sistema de Perguntas
+              Sistema de Perguntas do Inquiro
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">

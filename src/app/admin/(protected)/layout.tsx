@@ -1,16 +1,40 @@
 import Link from 'next/link';
 import { getSessionAndAdmin } from '@/lib/isAdmin';
+import SessionChecker from '@/components/SessionChecker';
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAdmin } = await getSessionAndAdmin();
-  if (!isAdmin) return <div className="p-6 text-red-600">Acesso negado.</div>;
+  const { isAdmin, user } = await getSessionAndAdmin();
+  
+  if (!isAdmin || !user) {
+    // Redireciona para login se não for admin
+    const redirectUrl = new URL('/admin/login', 'http://localhost');
+    redirectUrl.searchParams.set('error', 'Acesso negado');
+    redirectUrl.searchParams.set('redirect', '/admin');
+    
+    // Em produção, você pode usar redirect() do Next.js
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">❌ Acesso Negado</div>
+          <p className="text-gray-600 mb-4">Você não tem permissão para acessar esta área.</p>
+          <a 
+            href="/admin/login" 
+            className="btn-primary"
+          >
+            🔑 Fazer Login
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SessionChecker />
       {/* Admin Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,7 +44,7 @@ export default async function AdminLayout({
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-blue to-primary-orange rounded-lg flex items-center justify-center">
                   <span className="text-white text-lg font-bold">A</span>
                 </div>
-                <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+                <h1 className="text-xl font-bold text-gray-900">Inquiro Admin</h1>
               </Link>
             </div>
             <div className="flex items-center space-x-4">

@@ -1,6 +1,12 @@
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { error?: string; redirect?: string };
+}) {
+  const { error, redirect } = searchParams;
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-orange-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -13,8 +19,20 @@ export default function LoginPage() {
             Acesso Administrativo
           </h2>
           <p className="text-gray-600">
-            Faça login para acessar o painel de controle
+            Faça login para acessar o painel de controle do Inquiro
           </p>
+          
+          {/* Error Messages */}
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm">
+                {error === 'Acesso negado' && '❌ Você não tem permissão para acessar esta área'}
+                {error === 'Erro de verificação' && '⚠️ Erro ao verificar suas credenciais'}
+                {error === 'Sessão expirada' && '⏰ Sua sessão expirou. Faça login novamente'}
+                {!['Acesso negado', 'Erro de verificação', 'Sessão expirada'].includes(error) && `❌ ${error}`}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Login Form */}
@@ -53,7 +71,7 @@ export default function LoginPage() {
                 type="submit"
                 className="btn-primary w-full py-3 text-lg font-semibold"
               >
-                🔑 Entrar no Sistema
+                🔑 Entrar no Inquiro
               </button>
             </div>
           </form>

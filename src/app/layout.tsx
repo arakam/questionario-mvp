@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Questionário MVP',
-  description: 'Sistema de questionários moderno e responsivo',
+  title: 'Inquiro',
+  description: 'Sistema de questionários moderno e responsivo - Inquiro',
 };
 
 export default function RootLayout({
@@ -22,7 +22,7 @@ export default function RootLayout({
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <h1 className="text-2xl font-bold text-gradient">
-                      📊 Questionário MVP
+                      📊 Inquiro
                     </h1>
                   </div>
                 </div>
@@ -47,7 +47,7 @@ export default function RootLayout({
           <footer className="bg-white border-t border-gray-200 mt-auto">
             <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
               <div className="text-center text-gray-600">
-                <p>&copy; 2024 Questionário MVP. Todos os direitos reservados.</p>
+                <p>&copy; 2024 Inquiro. Todos os direitos reservados.</p>
               </div>
             </div>
           </footer>

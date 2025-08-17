@@ -5,7 +5,11 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  const PUBLIC_ADMIN_PATHS = new Set<string>(['/admin/login', '/admin/login/action']);
+  const PUBLIC_ADMIN_PATHS = new Set<string>([
+    '/admin/login', 
+    '/admin/login/action',
+    '/admin/logout'
+  ]);
   const pathname = req.nextUrl.pathname;
 
   if (pathname.startsWith('/admin') && !PUBLIC_ADMIN_PATHS.has(pathname)) {
@@ -27,13 +31,34 @@ export async function middleware(req: NextRequest) {
       { cookies: cookieMethods }
     );
 
-    const { data } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getUser();
 
-    if (!data.user) {
+    if (!data.user || error) {
       const url = req.nextUrl.clone();
       url.pathname = '/admin/login';
-      // garante que `redirect` é sempre path relativo
       url.searchParams.set('redirect', pathname + (req.nextUrl.search ?? ''));
+      return NextResponse.redirect(url);
+    }
+
+    // Verifica se o usuário é admin (opcional, para maior segurança)
+    try {
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('email', data.user.email)
+        .limit(1);
+      
+      if (!adminData || adminData.length === 0) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/admin/login';
+        url.searchParams.set('error', 'Acesso negado');
+        return NextResponse.redirect(url);
+      }
+    } catch (adminError) {
+      // Se não conseguir verificar admin, redireciona para login
+      const url = req.nextUrl.clone();
+      url.pathname = '/admin/login';
+      url.searchParams.set('error', 'Erro de verificação');
       return NextResponse.redirect(url);
     }
   }

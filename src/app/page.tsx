@@ -12,7 +12,7 @@ export default function HomePage() {
               <span className="text-gradient">Questionários</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Crie, gerencie e analise questionários de forma simples e eficiente. 
+              Crie, gerencie e analise questionários de forma simples e eficiente com o Inquiro. 
               Interface moderna e responsiva para todas as suas necessidades.
             </p>
           </div>
@@ -36,7 +36,7 @@ export default function HomePage() {
               Funcionalidades Principais
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tudo que você precisa para criar questionários profissionais
+              Tudo que você precisa para criar questionários profissionais com o Inquiro
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function HomePage() {
               Pronto para começar?
             </h2>
             <p className="text-xl mb-8 text-blue-100">
-              Acesse o painel administrativo e comece a criar seus questionários hoje mesmo.
+              Acesse o painel administrativo do Inquiro e comece a criar seus questionários hoje mesmo.
             </p>
             <Link href="/admin" className="btn-orange text-lg px-8 py-4 bg-white text-primary-orange hover:bg-gray-100">
               🚀 Começar Agora
