@@ -1,5 +1,8 @@
 import { createSupabaseServer } from '@/lib/supabaseServer';
 
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
+
 export default async function EditPergunta({
   params,
 }: {

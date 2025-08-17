@@ -4,6 +4,9 @@ import PerguntasSelector, {
   type Categoria,
 } from '@/components/PerguntasSelector';
 
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
+
 export const dynamic = 'force-dynamic';
 
 type Questionario = {

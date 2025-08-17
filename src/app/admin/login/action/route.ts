@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
+
 type Creds = { email: string; password: string; redirect?: string };
 
 function sanitizeRedirect(input: string | undefined): string {
@@ -63,9 +66,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=content', req.url));
   }
 
-  // Resposta com redirecionamento interno
-  const res = NextResponse.redirect(new URL(redirect, req.url));
-
   const cookieStore = await cookies();
   const cookieMethods = {
     get(name: string) {
@@ -73,11 +73,9 @@ export async function POST(req: NextRequest) {
     },
     set(name: string, value: string, options: CookieOptions) {
       cookieStore.set({ name, value, ...options });
-      res.cookies.set({ name, value, ...options });
     },
     remove(name: string, options: CookieOptions) {
       cookieStore.set({ name, value: '', ...options, maxAge: 0 });
-      res.cookies.set({ name, value: '', ...options, maxAge: 0 });
     },
   } as unknown as NonNullable<Parameters<typeof createServerClient>[2]>['cookies'];
 
@@ -87,11 +85,50 @@ export async function POST(req: NextRequest) {
     { cookies: cookieMethods }
   );
 
+  // Primeiro tenta fazer login
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data?.session) {
+    console.error('Erro de login:', error?.message || 'Sem sessão');
     return NextResponse.redirect(new URL('/admin/login?error=auth', req.url));
   }
 
-  return res;
+  // Se chegou aqui, o login foi bem-sucedido
+  // Agora verifica se o usuário é admin
+  try {
+    const { data: adminData, error: adminError } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('email', email)
+      .limit(1);
+
+    if (adminError || !adminData || adminData.length === 0) {
+      console.error('Usuário não é admin:', email);
+      // Faz logout se não for admin
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL('/admin/login?error=not_admin', req.url));
+    }
+
+    // Login e verificação de admin bem-sucedidos
+    console.log('Login bem-sucedido para:', email);
+    console.log('🔍 Debug redirecionamento:', { 
+      originalRedirect: redirect, 
+      sanitizedRedirect: redirect,
+      finalUrl: new URL(redirect, req.url).toString()
+    });
+    
+    // Cria resposta de redirecionamento
+    const res = NextResponse.redirect(new URL(redirect, req.url));
+    
+    // O Supabase já gerencia os cookies automaticamente
+    // Não precisamos aplicar cookies manualmente
+    
+    console.log('✅ Redirecionamento criado:', res.headers.get('location'));
+    return res;
+
+  } catch (adminCheckError) {
+    console.error('Erro ao verificar admin:', adminCheckError);
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL('/admin/login?error=admin_check', req.url));
+  }
 }

@@ -1,72 +1,46 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+  const pathname = req.nextUrl.pathname;
 
+  // Rotas públicas que não precisam de autenticação
   const PUBLIC_ADMIN_PATHS = new Set<string>([
     '/admin/login', 
     '/admin/login/action',
-    '/admin/logout'
+    '/admin/logout',
+    '/debug' // Adiciona debug como rota pública
   ]);
-  const pathname = req.nextUrl.pathname;
 
-  if (pathname.startsWith('/admin') && !PUBLIC_ADMIN_PATHS.has(pathname)) {
-    const cookieMethods = {
-      get(name: string) {
-        return req.cookies.get(name)?.value;
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        res.cookies.set({ name, value, ...options });
-      },
-      remove(name: string, options: CookieOptions) {
-        res.cookies.set({ name, value: '', ...options, maxAge: 0 });
-      },
-    } as unknown as NonNullable<Parameters<typeof createServerClient>[2]>['cookies'];
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: cookieMethods }
-    );
-
-    const { data, error } = await supabase.auth.getUser();
-
-    if (!data.user || error) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/admin/login';
-      url.searchParams.set('redirect', pathname + (req.nextUrl.search ?? ''));
-      // Usa redirecionamento relativo para evitar problemas de domínio
-      return NextResponse.redirect(url);
-    }
-
-    // Verifica se o usuário é admin (opcional, para maior segurança)
-    try {
-      const { data: adminData } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('email', data.user.email)
-        .limit(1);
-      
-             if (!adminData || adminData.length === 0) {
-         const url = req.nextUrl.clone();
-         url.pathname = '/admin/login';
-         url.searchParams.set('error', 'Acesso negado');
-         // Garante que o redirecionamento seja relativo ao domínio atual
-         return NextResponse.redirect(url);
-       }
-         } catch (adminError) {
-       // Se não conseguir verificar admin, redireciona para login
-       const url = req.nextUrl.clone();
-       url.pathname = '/admin/login';
-       url.searchParams.set('error', 'Erro de verificação');
-       // Garante que o redirecionamento seja relativo ao domínio atual
-       return NextResponse.redirect(url);
-     }
+  // Se não for uma rota admin ou for uma rota pública, continua
+  if (!pathname.startsWith('/admin') || PUBLIC_ADMIN_PATHS.has(pathname)) {
+    return NextResponse.next();
   }
 
-  return res;
+  // Verifica se há cookies de autenticação do Supabase
+  // O Supabase usa o formato: sb-{project-ref}-auth-token
+  const hasAuthCookies = req.cookies.getAll().some(cookie => 
+    cookie.name.startsWith('sb-') && 
+    cookie.name.endsWith('-auth-token') &&
+    cookie.value // Verifica se o cookie tem valor
+  );
+  
+  // Se há cookies de autenticação, permite o acesso
+  // A verificação completa será feita no layout
+  if (hasAuthCookies) {
+    console.log('🔓 Middleware: Cookies de auth encontrados, permitindo acesso');
+    return NextResponse.next();
+  }
+  
+  console.log('🚫 Middleware: Sem cookies de auth, redirecionando para login');
+  console.log('🍪 Cookies disponíveis:', req.cookies.getAll().map(c => c.name));
+
+  // Se não há tokens, redireciona para login
+  const url = req.nextUrl.clone();
+  url.pathname = '/admin/login';
+  url.searchParams.set('redirect', pathname + (req.nextUrl.search ?? ''));
+  
+  return NextResponse.redirect(url);
 }
 
 export const config = {

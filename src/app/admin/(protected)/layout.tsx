@@ -2,14 +2,26 @@ import Link from 'next/link';
 import { getSessionAndAdmin } from '@/lib/isAdmin';
 import SessionChecker from '@/components/SessionChecker';
 
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
+
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  console.log('🔍 Verificando layout admin...');
+  
   const { isAdmin, user } = await getSessionAndAdmin();
   
+  console.log('📊 Resultado da verificação:', { 
+    hasUser: !!user, 
+    userEmail: user?.email, 
+    isAdmin 
+  });
+  
   if (!isAdmin || !user) {
+    console.log('❌ Acesso negado - redirecionando para login');
     // Redireciona para login se não for admin
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -26,6 +38,8 @@ export default async function AdminLayout({
       </div>
     );
   }
+  
+  console.log('✅ Acesso permitido - renderizando layout admin');
 
   return (
     <div className="min-h-screen bg-gray-50">

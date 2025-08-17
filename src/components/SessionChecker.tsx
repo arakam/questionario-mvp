@@ -1,5 +1,8 @@
 'use client';
 
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabaseClient';

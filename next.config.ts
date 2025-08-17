@@ -32,7 +32,7 @@ const nextConfig = {
     ];
   },
   // Configurações para resolver warnings do Supabase
-  webpack: (config, { isServer }) => {
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
     // Suprime o warning do Supabase Realtime
     config.ignoreWarnings = [
       {
@@ -40,6 +40,16 @@ const nextConfig = {
         message: /Critical dependency: the request of a dependency is an expression/,
       },
     ];
+    
+    // Configurações para resolver problemas do Edge Runtime
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
     
     return config;
   },

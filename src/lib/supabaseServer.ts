@@ -1,5 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**

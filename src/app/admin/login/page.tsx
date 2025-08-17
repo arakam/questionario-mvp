@@ -22,17 +22,21 @@ export default async function LoginPage({
             Faça login para acessar o painel de controle do Inquiro
           </p>
           
-          {/* Error Messages */}
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm">
-                {error === 'Acesso negado' && '❌ Você não tem permissão para acessar esta área'}
-                {error === 'Erro de verificação' && '⚠️ Erro ao verificar suas credenciais'}
-                {error === 'Sessão expirada' && '⏰ Sua sessão expirou. Faça login novamente'}
-                {!['Acesso negado', 'Erro de verificação', 'Sessão expirada'].includes(error) && `❌ ${error}`}
-              </p>
-            </div>
-          )}
+                     {/* Error Messages */}
+           {error && (
+             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+               <p className="text-red-700 text-sm">
+                 {error === 'Acesso negado' && '❌ Você não tem permissão para acessar esta área'}
+                 {error === 'Erro de verificação' && '⚠️ Erro ao verificar suas credenciais'}
+                 {error === 'Sessão expirada' && '⏰ Sua sessão expirou. Faça login novamente'}
+                 {error === 'auth' && '🔐 Email ou senha incorretos'}
+                 {error === 'not_admin' && '🚫 Este usuário não tem permissão de administrador'}
+                 {error === 'admin_check' && '⚠️ Erro ao verificar permissões de administrador'}
+                 {error === 'content' && '📝 Erro no formulário de login'}
+                 {!['Acesso negado', 'Erro de verificação', 'Sessão expirada', 'auth', 'not_admin', 'admin_check', 'content'].includes(error) && `❌ ${error}`}
+               </p>
+             </div>
+           )}
         </div>
 
         {/* Login Form */}

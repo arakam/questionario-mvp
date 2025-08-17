@@ -2,6 +2,9 @@ import { createSupabaseServer } from '@/lib/supabaseServer';
 import { getSessionAndAdmin } from '@/lib/isAdmin';
 import Link from 'next/link';
 
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
+
 export default async function CategoriasPage() {
   const { isAdmin } = await getSessionAndAdmin();
   if (!isAdmin) return <div className="p-6 text-red-600">Acesso negado.</div>;

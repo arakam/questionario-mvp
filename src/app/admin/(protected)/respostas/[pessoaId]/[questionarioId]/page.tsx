@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { supabaseAdminOnly } from '@/lib/supabaseAdminOnly';
 import { getSessionAndAdmin } from '@/lib/isAdmin';
 
+// Força o uso do Node.js runtime para evitar problemas com Edge Runtime
+export const runtime = 'nodejs';
+
 export const dynamic = 'force-dynamic';
 
 /** Tipos das entidades */
