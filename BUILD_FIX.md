@@ -1,15 +1,27 @@
 # 🔧 Correções de Build - Problemas de Tipo TypeScript
 
-## 🚨 **Problema Identificado**
+## 🚨 **Problemas Identificados**
 
-### **Erro de Build:**
+### **Erro 1 - Tipo TypeScript:**
 ```typescript
 ./src/app/api/debug-session/route.ts:53:28
 Type error: Property 'message' does not exist on type 'never'.
 ```
 
-### **Causa Raiz:**
+### **Erro 2 - Variável Duplicada:**
+```typescript
+./src/app/api/debug-supabase/route.ts
+Module parse failed: Identifier 'error' has already been declared (47:18)
+
+./src/app/api/debug-tables/route.ts
+Module parse failed: Identifier 'error' has already been declared (46:14)
+```
+
+### **Causa 1 - Tipo TypeScript:**
 O TypeScript estava inferindo incorretamente o tipo dos erros do Supabase, resultando em tipo `never` para variáveis de erro.
+
+### **Causa 2 - Variável Duplicada:**
+A variável `error` estava sendo declarada duas vezes no mesmo escopo, causando conflito de nomes.
 
 ## 🔧 **Soluções Implementadas**
 
@@ -33,11 +45,24 @@ details: adminError.message
 details: (adminError as SupabaseError).message
 ```
 
-### **3. Arquivos Corrigidos:**
-- ✅ `src/app/api/debug-session/route.ts`
-- ✅ `src/app/api/debug-tables/route.ts`
-- ✅ `src/app/api/debug-supabase/route.ts`
-- ✅ `src/app/api/debug-login/route.ts`
+### **3. Variáveis Duplicadas Corrigidas**
+```typescript
+// ANTES (causava erro):
+const error = healthError as SupabaseError;
+// ... código ...
+const error = healthError as SupabaseError; // ❌ Duplicada!
+
+// DEPOIS (corrigido):
+const error = healthError as SupabaseError;
+// ... código ...
+// Usa a mesma variável 'error' já declarada
+```
+
+### **4. Arquivos Corrigidos:**
+- ✅ `src/app/api/debug-session/route.ts` - Tipagem
+- ✅ `src/app/api/debug-tables/route.ts` - Tipagem + Variável duplicada
+- ✅ `src/app/api/debug-supabase/route.ts` - Tipagem + Variável duplicada
+- ✅ `src/app/api/debug-login/route.ts` - Tipagem
 
 ## 🧪 **Para Testar Agora**
 

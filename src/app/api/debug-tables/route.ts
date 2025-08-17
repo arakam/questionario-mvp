@@ -50,7 +50,6 @@ export async function GET() {
     }
 
     // Outro tipo de erro
-    const error = adminsError as SupabaseError;
     return NextResponse.json({
       success: false,
       error: 'Erro ao acessar tabela admins',

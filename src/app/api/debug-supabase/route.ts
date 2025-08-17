@@ -52,7 +52,6 @@ export async function GET() {
         });
       }
       
-      const error = healthError as SupabaseError;
       return NextResponse.json({ 
         error: 'Erro de conexão com Supabase',
         details: error.message,
