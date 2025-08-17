@@ -60,7 +60,7 @@ export default async function AdminLayout({
               <Link href="/" className="nav-link">
                 ← Voltar ao Site
               </Link>
-              <Link href="/admin/logout" className="btn-secondary">
+              <Link href="/admin/logout" className="btn-secondary" prefetch={false}>
                 Sair
               </Link>
             </div>
@@ -78,27 +78,27 @@ export default async function AdminLayout({
               </h2>
             </div>
             
-            <Link href="/admin" className="sidebar-item">
+            <Link href="/admin" className="sidebar-item" prefetch={false}>
               <span className="mr-3">📊</span>
               Dashboard
             </Link>
             
-            <Link href="/admin/categorias" className="sidebar-item">
+            <Link href="/admin/categorias" className="sidebar-item" prefetch={false}>
               <span className="mr-3">🏷️</span>
               Categorias
             </Link>
             
-            <Link href="/admin/perguntas" className="sidebar-item">
+            <Link href="/admin/perguntas" className="sidebar-item" prefetch={false}>
               <span className="mr-3">❓</span>
               Perguntas
             </Link>
             
-            <Link href="/admin/questionarios" className="sidebar-item">
+            <Link href="/admin/questionarios" className="sidebar-item" prefetch={false}>
               <span className="mr-3">📋</span>
               Questionários
             </Link>
             
-            <Link href="/admin/respostas" className="sidebar-item">
+            <Link href="/admin/respostas" className="sidebar-item" prefetch={false}>
               <span className="mr-3">📈</span>
               Respostas
             </Link>
