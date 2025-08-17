@@ -13,7 +13,7 @@ export function getBaseUrl(): string {
   
   // Fallback para desenvolvimento
   if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:3000';
+    return 'http://localhost:3008';
   }
   
   // Em produção, tenta detectar automaticamente
@@ -25,7 +25,7 @@ export function getBaseUrl(): string {
   // Servidor: usa a variável de ambiente ou fallback
   return process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}`
-    : 'https://yourdomain.com'; // Fallback genérico
+    : process.env.NEXT_PUBLIC_SITE_URL || 'https://inquito.unityerp.app'; // Fallback para seu domínio
 }
 
 /**
@@ -39,7 +39,7 @@ export function createSafeRedirectUrl(path: string, baseUrl?: string): string {
   
   // Em desenvolvimento, usa localhost
   if (process.env.NODE_ENV === 'development') {
-    return `http://localhost:3000${safePath}`;
+    return `http://localhost:3008${safePath}`;
   }
   
   // Em produção, usa a URL base
