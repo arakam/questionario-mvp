@@ -1,46 +1,84 @@
-import { headers } from 'next/headers';
+import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
-
-function sanitizeRedirectParam(v: string | null): string {
-  if (!v) return '/admin';
-  try {
-    const u = new URL(v);
-    if (u.origin && u.protocol) return '/admin';
-  } catch { /* não é absoluta, ok */ }
-  return v.startsWith('/') ? v : `/${v}`;
-}
-
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const sp = (await searchParams) ?? {};
-  const redirectRaw = Array.isArray(sp.redirect) ? sp.redirect[0] : sp.redirect ?? '/admin';
-  const redirect = sanitizeRedirectParam(redirectRaw);
-
-  const h = await headers();
-  const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
-  const proto = h.get('x-forwarded-proto') ?? 'http';
-
+export default function LoginPage() {
   return (
-    <main className="min-h-dvh grid place-items-center p-6">
-      <form
-        action="/admin/login/action"
-        method="post"
-        className="w-full max-w-sm border rounded-xl p-6 space-y-3 bg-white shadow-sm"
-      >
-        <h1 className="text-xl font-semibold">Login do Admin</h1>
-        <input name="email" type="email" required placeholder="E-mail" className="border rounded px-3 py-2 w-full" />
-        <input name="password" type="password" required placeholder="Senha" className="border rounded px-3 py-2 w-full" />
-        <input type="hidden" name="redirect" value={redirect} />
-        <button className="w-full bg-black text-white rounded px-3 py-2">Entrar</button>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-orange-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-primary-blue to-primary-orange rounded-full flex items-center justify-center mb-6">
+            <span className="text-2xl text-white font-bold">🔐</span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Acesso Administrativo
+          </h2>
+          <p className="text-gray-600">
+            Faça login para acessar o painel de controle
+          </p>
+        </div>
 
-        <p className="text-[11px] text-gray-500 pt-2">
-          Você está acessando: {proto}://{host}
-        </p>
-      </form>
-    </main>
+        {/* Login Form */}
+        <div className="card shadow-glow">
+          <form action="/admin/login/action" method="post" className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                E-mail
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="input-field"
+                placeholder="seu@email.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Senha
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="input-field"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                className="btn-primary w-full py-3 text-lg font-semibold"
+              >
+                🔑 Entrar no Sistema
+              </button>
+            </div>
+          </form>
+
+          {/* Back to Home */}
+          <div className="mt-6 text-center">
+            <Link href="/" className="nav-link text-sm">
+              ← Voltar ao site principal
+            </Link>
+          </div>
+        </div>
+
+        {/* Info Card */}
+        <div className="card bg-gradient-to-r from-blue-50 to-orange-50 border-blue-200">
+          <div className="text-center">
+            <div className="text-2xl mb-2">💡</div>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              Primeira vez aqui?
+            </h3>
+            <p className="text-sm text-gray-600">
+              Entre em contato com o administrador para obter suas credenciais de acesso.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

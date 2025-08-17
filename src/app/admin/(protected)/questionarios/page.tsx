@@ -18,43 +18,107 @@ export default async function QuestionariosPage() {
   if (error) return <div className="p-6 text-red-600">Erro: {error.message}</div>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold">Questionários</h1>
-        <Link href="/admin/questionarios/novo" className="border px-3 py-1 rounded">
-          Novo
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            📋 Gerenciar Questionários
+          </h1>
+          <p className="text-gray-600">
+            Crie e gerencie questionários personalizados para sua audiência
+          </p>
+        </div>
+        
+        <Link href="/admin/questionarios/novo" className="btn-primary">
+          ➕ Novo Questionário
         </Link>
       </div>
 
-      <ul className="divide-y">
+      {/* Stats Card */}
+      <div className="card text-center">
+        <div className="text-3xl font-bold text-primary-blue mb-2">
+          {qs?.length || 0}
+        </div>
+        <div className="text-gray-600">Total de Questionários</div>
+      </div>
+
+      {/* Questionários Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {(qs ?? []).map((q: any) => (
-          <li key={q.id} className="py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="font-medium truncate">{q.nome}</div>
-              <div className="text-sm opacity-70">
-                Slug: <span className="font-mono">{q.slug}</span> • Link público:{' '}
-                <span className="font-mono">/q/{q.slug}</span>
+          <div key={q.id} className="card-hover group">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary-blue transition-colors duration-200">
+                  {q.nome}
+                </h3>
+                
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">🔗 Slug:</span>
+                    <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">
+                      {q.slug}
+                    </code>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">🌐 Link público:</span>
+                    <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">
+                      /q/{q.slug}
+                    </code>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">📅 Criado:</span>
+                    <span className="text-xs">
+                      {new Date(q.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="ml-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-blue to-accent-blue rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-white text-lg">📊</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Botões de compartilhar/cópia */}
-              <ShareButtons slug={q.slug} nome={q.nome} />
-
-              {/* Editar */}
-              <Link
-                className="underline text-sm"
-                href={`/admin/questionarios/${q.id}`}
-              >
-                Editar
-              </Link>
+            {/* Share Buttons */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-500">Compartilhar:</span>
+                  <ShareButtons slug={q.slug} nome={q.nome} />
+                </div>
+                
+                <Link
+                  href={`/admin/questionarios/${q.id}`}
+                  className="btn-secondary text-sm px-3 py-2 group-hover:bg-primary-blue group-hover:text-white transition-all duration-200"
+                >
+                  ✏️ Editar
+                </Link>
+              </div>
             </div>
-          </li>
+          </div>
         ))}
-        {(qs ?? []).length === 0 && (
-          <li className="py-6 text-center text-gray-500">Nenhum questionário ainda.</li>
-        )}
-      </ul>
+      </div>
+
+      {/* Empty State */}
+      {(qs ?? []).length === 0 && (
+        <div className="card text-center py-12">
+          <div className="text-gray-500">
+            <div className="text-4xl mb-2">📭</div>
+            <div className="text-lg font-medium mb-1">Nenhum questionário encontrado</div>
+            <div className="text-sm mb-4">
+              Comece criando seu primeiro questionário personalizado
+            </div>
+            <Link href="/admin/questionarios/novo" className="btn-primary">
+              🚀 Criar Primeiro Questionário
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,26 +1,145 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-blue: #2563eb;
+  --primary-blue-dark: #1d4ed8;
+  --primary-orange: #f97316;
+  --primary-orange-dark: #ea580c;
+  --accent-blue: #3b82f6;
+  --accent-orange: #fb923c;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --color-primary-blue: var(--primary-blue);
+  --color-primary-blue-dark: var(--primary-blue-dark);
+  --color-primary-orange: var(--primary-orange);
+  --color-primary-orange-dark: var(--primary-orange-dark);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-orange: var(--accent-orange);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-gray-900;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .btn-primary {
+    @apply bg-primary-blue hover:bg-primary-blue-dark text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-100 text-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  .btn-orange {
+    @apply bg-primary-orange hover:bg-primary-orange-dark text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  }
+
+  .card-hover {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all duration-200 hover:shadow-lg hover:border-gray-300;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all duration-200 bg-white;
+  }
+
+  .select-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all duration-200 bg-white;
+  }
+
+  .table-modern {
+    @apply w-full bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200;
+  }
+
+  .table-modern th {
+    @apply bg-gradient-to-r from-primary-blue to-accent-blue text-white font-semibold px-4 py-3 text-left text-sm;
+  }
+
+  .table-modern td {
+    @apply px-4 py-3 border-t border-gray-200 text-sm;
+  }
+
+  .table-modern tbody tr:hover {
+    @apply bg-gray-50;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .nav-link {
+    @apply text-gray-600 hover:text-primary-blue transition-colors duration-200 font-medium;
+  }
+
+  .nav-link-active {
+    @apply text-primary-blue font-semibold;
+  }
+
+  .sidebar {
+    @apply bg-white border-r border-gray-200 shadow-sm;
+  }
+
+  .sidebar-item {
+    @apply flex items-center px-4 py-3 text-gray-600 hover:text-primary-blue hover:bg-blue-50 transition-all duration-200 rounded-lg mx-2;
+  }
+
+  .sidebar-item-active {
+    @apply text-primary-blue bg-blue-50 font-medium;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-br from-primary-blue via-accent-blue to-primary-blue-dark;
+  }
+
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-blue to-primary-orange bg-clip-text text-transparent;
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.1);
+  }
+
+  .shadow-glow-orange {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.1);
+  }
 }

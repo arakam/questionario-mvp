@@ -1,54 +1,36 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-type Cat = { id: string; nome: string };
+type Categoria = { id: string; nome: string };
 
-export default function CategoryFilter({
-  categorias,
-  selectedId,
-  basePath,
-}: {
-  categorias: Cat[];
-  selectedId?: string;
-  basePath: string; // use sempre caminho relativo ex.: "/admin/perguntas"
-}) {
+interface CategoryFilterProps {
+  categorias: Categoria[];
+  categoriaId?: string;
+}
+
+export default function CategoryFilter({ categorias, categoriaId }: CategoryFilterProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
-  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const value = e.target.value;
-    const params = new URLSearchParams(searchParams?.toString());
-    if (value === 'todas') params.delete('cat');
-    else params.set('cat', value);
-
-    // Atualiza sem rolar a página; transição suave controlada por AnimatedFade
-    startTransition(() => {
-      router.replace(
-        params.toString() ? `${basePath}?${params.toString()}` : basePath,
-        { scroll: false }
-      );
-    });
-  }
+  const handleCategoryChange = (value: string) => {
+    if (value) {
+      router.push(`/admin/perguntas?categoria=${value}`);
+    } else {
+      router.push('/admin/perguntas');
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-      <div className="flex flex-col">
-        <label htmlFor="cat" className="text-sm font-medium">
-          Filtrar por categoria
-        </label>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <div className="flex items-center gap-3">
+        <label className="text-sm font-medium text-gray-700">Filtrar por categoria:</label>
         <select
-          id="cat"
-          name="cat"
-          onChange={onChange}
-          defaultValue={selectedId ?? 'todas'}
-          disabled={isPending}
-          className={`mt-1 w-full rounded-md border px-3 py-2 text-sm transition
-            ${isPending ? 'opacity-60 cursor-wait' : ''}`}
+          value={categoriaId ?? ''}
+          onChange={(e) => handleCategoryChange(e.target.value)}
+          className="select-field min-w-[200px]"
         >
-          <option value="todas">Todas</option>
+          <option value="">Todas as categorias</option>
           {categorias.map((c) => (
             <option key={c.id} value={c.id}>
               {c.nome}
@@ -56,16 +38,15 @@ export default function CategoryFilter({
           ))}
         </select>
       </div>
-
-      {/* Indicador sutil de carregamento */}
-      <div
-        className={`text-xs text-gray-500 h-6 flex items-center transition-opacity ${
-          isPending ? 'opacity-100' : 'opacity-0'
-        }`}
-        aria-live="polite"
-      >
-        Atualizando…
-      </div>
+      
+      {categoriaId && (
+        <Link 
+          href="/admin/perguntas" 
+          className="btn-secondary text-sm px-3 py-2"
+        >
+          🗑️ Limpar filtro
+        </Link>
+      )}
     </div>
   );
 }
