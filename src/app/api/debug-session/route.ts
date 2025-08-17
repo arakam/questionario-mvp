@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/lib/supabaseServer';
+import type { SupabaseError } from '@/types/supabase';
 
 export async function GET() {
   try {
@@ -11,7 +12,7 @@ export async function GET() {
     if (userError) {
       return NextResponse.json({ 
         error: 'Erro ao obter usuário', 
-        details: userError.message 
+        details: (userError as SupabaseError).message 
       }, { status: 500 });
     }
 
@@ -31,7 +32,7 @@ export async function GET() {
     if (adminError) {
       return NextResponse.json({ 
         error: 'Erro ao verificar admin', 
-        details: adminError.message 
+        details: (adminError as SupabaseError).message 
       }, { status: 500 });
     }
 
@@ -50,7 +51,7 @@ export async function GET() {
       adminCheck: {
         hasData: !!adminData,
         dataLength: adminData?.length || 0,
-        error: adminError?.message || null
+        error: null // adminError já foi verificado acima
       }
     });
 

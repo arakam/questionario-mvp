@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/lib/supabaseServer';
+import type { SupabaseError } from '@/types/supabase';
 
 export async function GET() {
   try {
@@ -27,7 +28,8 @@ export async function GET() {
 
     if (healthError) {
       // Se a tabela admins não existe, isso é esperado
-      if (healthError.code === 'PGRST116' || healthError.message.includes('relation') || healthError.message.includes('table')) {
+      const error = healthError as SupabaseError;
+      if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('table')) {
         return NextResponse.json({ 
           success: true,
           config: {
@@ -50,10 +52,11 @@ export async function GET() {
         });
       }
       
+      const error = healthError as SupabaseError;
       return NextResponse.json({ 
         error: 'Erro de conexão com Supabase',
-        details: healthError.message,
-        code: healthError.code
+        details: error.message,
+        code: error.code
       }, { status: 500 });
     }
 

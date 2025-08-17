@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/lib/supabaseServer';
+import type { SupabaseError } from '@/types/supabase';
 
 export async function GET() {
   try {
@@ -29,7 +30,8 @@ export async function GET() {
     }
 
     // Se há erro, verifica se é porque a tabela não existe
-    if (adminsError.code === 'PGRST116' || adminsError.message.includes('relation') || adminsError.message.includes('table')) {
+    const error = adminsError as SupabaseError;
+    if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('table')) {
       return NextResponse.json({
         success: false,
         error: 'Tabela admins não existe',
@@ -48,11 +50,12 @@ export async function GET() {
     }
 
     // Outro tipo de erro
+    const error = adminsError as SupabaseError;
     return NextResponse.json({
       success: false,
       error: 'Erro ao acessar tabela admins',
-      details: adminsError.message,
-      code: adminsError.code,
+      details: error.message,
+      code: error.code,
       tables: {
         available: [],
         count: 0
@@ -61,7 +64,7 @@ export async function GET() {
         exists: false,
         structure: null,
         sampleData: null,
-        error: adminsError.message
+        error: error.message
       }
     });
 

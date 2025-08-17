@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import type { SupabaseError } from '@/types/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     if (authError) {
       return NextResponse.json({ 
         error: 'Erro de autenticação', 
-        details: authError.message 
+        details: (authError as SupabaseError).message 
       }, { status: 401 });
     }
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     if (adminError) {
       return NextResponse.json({ 
         error: 'Erro ao verificar admin', 
-        details: adminError.message 
+        details: (adminError as SupabaseError).message 
       }, { status: 500 });
     }
 
