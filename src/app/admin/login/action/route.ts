@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     password = body.password;
     redirect = body.redirect || '/admin';
   } catch {
-    return NextResponse.redirect(new URL('/admin/login?error=content', req.url));
+    return NextResponse.redirect('/admin/login?error=content');
   }
 
   const cookieStore = await cookies();
@@ -90,23 +90,33 @@ export async function POST(req: NextRequest) {
 
   if (error || !data?.session) {
     console.error('Erro de login:', error?.message || 'Sem sessão');
-    return NextResponse.redirect(new URL('/admin/login?error=auth', req.url));
+    return NextResponse.redirect('/admin/login?error=auth');
   }
 
   // Se chegou aqui, o login foi bem-sucedido
   // Agora verifica se o usuário é admin
   try {
+    console.log('🔍 Verificando se usuário é admin:', email);
+    
     const { data: adminData, error: adminError } = await supabase
       .from('admins')
       .select('id')
       .eq('email', email)
       .limit(1);
 
-    if (adminError || !adminData || adminData.length === 0) {
-      console.error('Usuário não é admin:', email);
+    console.log('🔍 Resultado da verificação admin:', { adminData, adminError });
+
+    if (adminError) {
+      console.error('❌ Erro ao verificar admin:', adminError);
+      await supabase.auth.signOut();
+      return NextResponse.redirect('/admin/login?error=admin_check');
+    }
+
+    if (!adminData || adminData.length === 0) {
+      console.error('❌ Usuário não é admin:', email);
       // Faz logout se não for admin
       await supabase.auth.signOut();
-      return NextResponse.redirect(new URL('/admin/login?error=not_admin', req.url));
+      return NextResponse.redirect('/admin/login?error=not_admin');
     }
 
     // Login e verificação de admin bem-sucedidos
