@@ -66,7 +66,6 @@ const nextConfig = {
     basePath: '',
     // Configuração para evitar localhost em produção
     env: {
-      NODE_ENV: 'production',
       NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     },
   }),
