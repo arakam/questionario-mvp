@@ -13,10 +13,18 @@ export function getBaseUrl(): string {
     return origin;
   }
   
-  // No servidor, usa variáveis de ambiente
+  // No servidor, prioriza variáveis de ambiente
   if (process.env.NEXT_PUBLIC_SITE_URL) {
-    console.log('🔍 getBaseUrl: Servidor, usando NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL);
-    return process.env.NEXT_PUBLIC_SITE_URL;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL.trim();
+    console.log('🔍 getBaseUrl: Servidor, usando NEXT_PUBLIC_SITE_URL:', siteUrl);
+    
+    // Valida se a URL não contém localhost
+    if (siteUrl.includes('localhost')) {
+      console.warn('⚠️ getBaseUrl: NEXT_PUBLIC_SITE_URL contém localhost, usando fallback seguro');
+      return 'https://inquiro.unityerp.app';
+    }
+    
+    return siteUrl;
   }
   
   // Fallback para desenvolvimento
@@ -25,9 +33,10 @@ export function getBaseUrl(): string {
     return 'http://localhost:3008';
   }
   
-  // Fallback para produção
+  // Fallback para produção - NUNCA deve chegar aqui se NEXT_PUBLIC_SITE_URL estiver configurado
   const fallbackUrl = 'https://inquiro.unityerp.app';
   console.log('🔍 getBaseUrl: Servidor produção, usando fallback:', fallbackUrl);
+  console.warn('⚠️ getBaseUrl: Usando fallback - verifique se NEXT_PUBLIC_SITE_URL está configurado');
   return fallbackUrl;
 }
 
@@ -47,8 +56,16 @@ export function createSafeRedirectUrl(path: string, baseUrl?: string): string {
   }
   
   // No servidor, constrói URL completa
-  console.log('🔍 createSafeRedirectUrl: Servidor, construindo URL completa:', `${base}${safePath}`);
-  return `${base}${safePath}`;
+  const fullUrl = `${base}${safePath}`;
+  console.log('🔍 createSafeRedirectUrl: Servidor, construindo URL completa:', fullUrl);
+  
+  // Valida se a URL final não contém localhost
+  if (fullUrl.includes('localhost')) {
+    console.error('❌ createSafeRedirectUrl: URL final contém localhost:', fullUrl);
+    throw new Error('URL de redirecionamento contém localhost - configuração incorreta');
+  }
+  
+  return fullUrl;
 }
 
 /**

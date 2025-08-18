@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getBaseUrl } from './lib/urlUtils';
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -61,13 +62,12 @@ export async function middleware(req: NextRequest) {
   console.log('🚫 Middleware: Sem cookies de auth válidos, redirecionando para login');
   console.log('❌ Middleware: Falha na verificação para:', pathname);
 
-  // Se não há tokens, redireciona para login
-  const url = req.nextUrl.clone();
-  url.pathname = '/admin/login';
-  url.searchParams.set('redirect', pathname + (req.nextUrl.search ?? ''));
+  // Se não há tokens, redireciona para login usando a URL base correta
+  const baseUrl = getBaseUrl();
+  const loginUrl = `${baseUrl}/admin/login?redirect=${encodeURIComponent(pathname + (req.nextUrl.search ?? ''))}`;
   
-  console.log('🔄 Middleware: Redirecionando para:', url.toString());
-  return NextResponse.redirect(url);
+  console.log('🔄 Middleware: Redirecionando para:', loginUrl);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

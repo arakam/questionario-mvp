@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { getBaseUrl } from '../../../lib/urlUtils';
 
 // Força o uso do Node.js runtime para evitar problemas com Edge Runtime
 export const runtime = 'nodejs';
@@ -140,6 +141,12 @@ export async function POST(req: NextRequest) {
   } catch (adminCheckError) {
     console.error('Erro ao verificar admin:', adminCheckError);
     await supabase.auth.signOut();
-    return NextResponse.redirect(new URL('/admin/login?error=admin_check', req.url));
+    
+    // Usa a URL base correta em vez de req.url
+    const baseUrl = getBaseUrl();
+    const errorUrl = `${baseUrl}/admin/login?error=admin_check`;
+    
+    console.log('🔄 Redirecionando para erro usando URL base:', errorUrl);
+    return NextResponse.redirect(errorUrl);
   }
 }
