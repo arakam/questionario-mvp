@@ -12,6 +12,9 @@ type Pergunta = {
   peso: number;
   ativa: boolean;
   categoria_id: string | null;
+  tipo: string;
+  opcoes?: string;
+  config_escala?: string;
 };
 
 export default async function PerguntasPage({
@@ -48,7 +51,7 @@ export default async function PerguntasPage({
   // Busca perguntas, com filtro opcional por categoria
   let query = supabase
     .from('perguntas')
-    .select('id, texto, peso, ativa, categoria_id')
+    .select('id, texto, peso, ativa, categoria_id, tipo, opcoes, config_escala')
     .order('created_at', { ascending: false });
 
   if (categoriaId) {
@@ -83,7 +86,7 @@ export default async function PerguntasPage({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="card text-center">
           <div className="text-3xl font-bold text-primary-blue mb-2">
             {perguntas?.length || 0}
@@ -97,83 +100,105 @@ export default async function PerguntasPage({
           </div>
           <div className="text-gray-600">Perguntas Ativas</div>
         </div>
-        
+
         <div className="card text-center">
-          <div className="text-3xl font-bold text-accent-blue mb-2">
-            {categorias?.length || 0}
+          <div className="text-3xl font-bold text-green-600 mb-2">
+            {(perguntas?.filter(p => p.tipo === 'sim_nao') || []).length}
           </div>
-          <div className="text-gray-600">Categorias</div>
+          <div className="text-gray-600">Sim/Não</div>
+        </div>
+
+        <div className="card text-center">
+          <div className="text-3xl font-bold text-purple-600 mb-2">
+            {(perguntas?.filter(p => p.tipo.includes('multipla_escolha')) || []).length}
+          </div>
+          <div className="text-gray-600">Múltipla Escolha</div>
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="card">
+      {/* Tabela de Perguntas */}
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="table-modern">
             <thead>
               <tr>
-                <th className="w-[40%]">Pergunta</th>
+                <th>Pergunta</th>
+                <th>Tipo</th>
                 <th>Categoria</th>
-                <th className="text-center">Peso</th>
-                <th className="text-center">Status</th>
-                <th className="text-center">Ações</th>
+                <th>Peso</th>
+                <th>Status</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {(perguntas ?? []).map((p) => {
-                const nomeCategoria = p.categoria_id ? catMap.get(p.categoria_id) ?? '—' : '—';
-                return (
-                  <tr key={p.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="font-medium text-gray-900">{p.texto}</td>
-                    <td>
-                      <span className="badge badge-info">
-                        {nomeCategoria}
-                      </span>
-                    </td>
-                    <td className="text-center">
-                      <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-700 rounded-full font-semibold text-sm">
-                        {p.peso}
-                      </span>
-                    </td>
-                    <td className="text-center">
-                      {p.ativa ? (
-                        <span className="badge badge-success">
-                          ✅ Ativa
-                        </span>
-                      ) : (
-                        <span className="badge badge-warning">
-                          ⏸️ Inativa
-                        </span>
-                      )}
-                    </td>
-                    <td className="text-center">
+              {perguntas?.map((pergunta) => (
+                <tr key={pergunta.id}>
+                  <td className="max-w-xs">
+                    <div className="font-medium text-gray-900">
+                      {pergunta.texto}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge ${getTipoBadgeClass(pergunta.tipo)}`}>
+                      {getTipoLabel(pergunta.tipo)}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="text-gray-600">
+                      {catMap.get(pergunta.categoria_id || '') || 'Sem categoria'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="font-medium text-gray-900">
+                      {pergunta.peso}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${pergunta.ativa ? 'badge-success' : 'badge-warning'}`}>
+                      {pergunta.ativa ? 'Ativa' : 'Inativa'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex space-x-2">
                       <Link 
-                        href={`/admin/perguntas/${p.id}`} 
-                        className="btn-secondary text-sm px-3 py-1"
+                        href={`/admin/perguntas/${pergunta.id}`}
+                        className="btn-secondary text-sm py-1 px-3"
                       >
                         ✏️ Editar
                       </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-              {(perguntas ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={5} className="text-center py-12">
-                    <div className="text-gray-500">
-                      <div className="text-4xl mb-2">📭</div>
-                      <div className="text-lg font-medium mb-1">Nenhuma pergunta encontrada</div>
-                      <div className="text-sm">
-                        {categoriaId ? 'nesta categoria' : 'Comece criando sua primeira pergunta'}
-                      </div>
                     </div>
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
       </div>
     </div>
   );
+}
+
+// Funções auxiliares para tipos de pergunta
+function getTipoLabel(tipo: string): string {
+  const labels: Record<string, string> = {
+    'sim_nao': 'Sim/Não',
+    'multipla_escolha_unica': 'Múltipla (Única)',
+    'multipla_escolha_multipla': 'Múltipla (Múltipla)',
+    'escala': 'Escala',
+    'texto_curto': 'Texto Curto',
+    'texto_longo': 'Texto Longo'
+  };
+  return labels[tipo] || tipo;
+}
+
+function getTipoBadgeClass(tipo: string): string {
+  const classes: Record<string, string> = {
+    'sim_nao': 'badge-success',
+    'multipla_escolha_unica': 'badge-info',
+    'multipla_escolha_multipla': 'badge-info',
+    'escala': 'badge-warning',
+    'texto_curto': 'badge-danger',
+    'texto_longo': 'badge-danger'
+  };
+  return classes[tipo] || 'badge-info';
 }
