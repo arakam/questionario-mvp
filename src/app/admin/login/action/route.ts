@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     password = body.password;
     redirect = body.redirect || '/admin';
   } catch {
-    return NextResponse.redirect('/admin/login?error=content');
+    return NextResponse.redirect(`${getBaseUrl()}/admin/login?error=content`);
   }
 
   const cookieStore = await cookies();
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
 
   if (error || !data?.session) {
     console.error('Erro de login:', error?.message || 'Sem sessão');
-    return NextResponse.redirect('/admin/login?error=auth');
+    return NextResponse.redirect(`${getBaseUrl()}/admin/login?error=auth`);
   }
 
   // Se chegou aqui, o login foi bem-sucedido
@@ -110,14 +110,14 @@ export async function POST(req: NextRequest) {
     if (adminError) {
       console.error('❌ Erro ao verificar admin:', adminError);
       await supabase.auth.signOut();
-      return NextResponse.redirect('/admin/login?error=admin_check');
+      return NextResponse.redirect(`${getBaseUrl()}/admin/login?error=admin_check`);
     }
 
     if (!adminData || adminData.length === 0) {
       console.error('❌ Usuário não é admin:', email);
       // Faz logout se não for admin
       await supabase.auth.signOut();
-      return NextResponse.redirect('/admin/login?error=not_admin');
+      return NextResponse.redirect(`${getBaseUrl()}/admin/login?error=not_admin`);
     }
 
     // Login e verificação de admin bem-sucedidos
@@ -128,9 +128,13 @@ export async function POST(req: NextRequest) {
       redirectPath: redirect
     });
     
-    // Cria resposta de redirecionamento usando caminho relativo
-    // O Next.js vai redirecionar para o domínio correto automaticamente
-    const res = NextResponse.redirect(redirect);
+    // Cria resposta de redirecionamento usando URL absoluta
+    // O Next.js 15 exige URLs absolutas para redirecionamento
+    const baseUrl = getBaseUrl();
+    const absoluteRedirect = `${baseUrl}${redirect}`;
+    
+    console.log('🔍 Redirecionando para URL absoluta:', absoluteRedirect);
+    const res = NextResponse.redirect(absoluteRedirect);
     
     // O Supabase já gerencia os cookies automaticamente
     // Não precisamos aplicar cookies manualmente
