@@ -10,6 +10,13 @@ export function getBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const origin = window.location.origin;
     console.log('🔍 getBaseUrl: Cliente, usando window.location.origin:', origin);
+    
+    // Valida se a origem não contém localhost
+    if (origin.includes('localhost')) {
+      console.warn('⚠️ getBaseUrl: Cliente detectou localhost, usando fallback seguro');
+      return 'https://inquiro.unityerp.app';
+    }
+    
     return origin;
   }
   
@@ -62,6 +69,8 @@ export function createSafeRedirectUrl(path: string, baseUrl?: string): string {
   // Valida se a URL final não contém localhost
   if (fullUrl.includes('localhost')) {
     console.error('❌ createSafeRedirectUrl: URL final contém localhost:', fullUrl);
+    console.error('❌ Base URL:', base);
+    console.error('❌ Path:', safePath);
     throw new Error('URL de redirecionamento contém localhost - configuração incorreta');
   }
   
@@ -74,4 +83,30 @@ export function createSafeRedirectUrl(path: string, baseUrl?: string): string {
 export function createInternalUrl(path: string): string {
   // Sempre usa caminhos relativos para redirecionamentos internos
   return path.startsWith('/') ? path : `/${path}`;
+}
+
+/**
+ * Valida se uma URL é segura para produção
+ */
+export function isProductionUrl(url: string): boolean {
+  if (!url) return false;
+  
+  // URLs que contêm localhost não são seguras para produção
+  if (url.includes('localhost')) {
+    console.warn('⚠️ isProductionUrl: URL contém localhost:', url);
+    return false;
+  }
+  
+  // URLs que começam com https:// são seguras
+  if (url.startsWith('https://')) {
+    return true;
+  }
+  
+  // URLs relativas são seguras
+  if (url.startsWith('/')) {
+    return true;
+  }
+  
+  console.warn('⚠️ isProductionUrl: URL não é segura para produção:', url);
+  return false;
 }
