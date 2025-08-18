@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { getBaseUrl } from '../../../lib/urlUtils';
+import { getBaseUrl } from '../../../../lib/urlUtils';
 
 // Força o uso do Node.js runtime para evitar problemas com Edge Runtime
 export const runtime = 'nodejs';

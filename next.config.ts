@@ -62,8 +62,6 @@ const nextConfig = {
   ...(process.env.NODE_ENV === 'production' && {
     // Força o uso de HTTPS em produção
     assetPrefix: process.env.NEXT_PUBLIC_SITE_URL,
-    // Configurações de host
-    hostname: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL).hostname : undefined,
   }),
 };
 
