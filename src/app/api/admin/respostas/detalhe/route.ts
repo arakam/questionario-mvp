@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   // perguntas do questionário
   const { data: qps, error: e3 } = await admin
     .from('questionario_perguntas')
-    .select('pergunta_id, perguntas!inner(id, texto, peso)')
+    .select('pergunta_id, perguntas!inner(id, texto, peso, tipo, opcoes, config_escala)')
     .eq('questionario_id', questionario_id);
   if (e3) return NextResponse.json({ error: e3.message }, { status: 400 });
 
@@ -44,15 +44,30 @@ export async function GET(req: NextRequest) {
   // respostas da pessoa
   const { data: resp, error: e4 } = await admin
     .from('respostas')
-    .select('pergunta_id, resposta, respondido_em')
+    .select('pergunta_id, resposta, resposta_texto, resposta_escala, resposta_multipla, tipo_pergunta, respondido_em')
     .eq('pessoa_id', pessoa_id)
     .eq('questionario_id', questionario_id);
 
   if (e4) return NextResponse.json({ error: e4.message }, { status: 400 });
 
-  const mapResp = new Map<string, { resposta: boolean; respondido_em: string | null }>();
+  const mapResp = new Map<string, { 
+    resposta: boolean | null; 
+    resposta_texto: string | null;
+    resposta_escala: number | null;
+    resposta_multipla: string[] | null;
+    tipo_pergunta: string;
+    respondido_em: string | null 
+  }>();
+  
   for (const r of (resp ?? [])) {
-    mapResp.set(r.pergunta_id, { resposta: r.resposta, respondido_em: r.respondido_em ?? null });
+    mapResp.set(r.pergunta_id, { 
+      resposta: r.resposta, 
+      resposta_texto: r.resposta_texto,
+      resposta_escala: r.resposta_escala,
+      resposta_multipla: r.resposta_multipla,
+      tipo_pergunta: r.tipo_pergunta,
+      respondido_em: r.respondido_em ?? null 
+    });
   }
 
   const itens = perguntas.map((p: any) => {
@@ -61,7 +76,14 @@ export async function GET(req: NextRequest) {
       pergunta_id: p.id,
       texto: p.texto,
       peso: p.peso,
+      tipo: p.tipo,
+      opcoes: p.opcoes,
+      config_escala: p.config_escala,
       resposta: r?.resposta ?? null,
+      resposta_texto: r?.resposta_texto ?? null,
+      resposta_escala: r?.resposta_escala ?? null,
+      resposta_multipla: r?.resposta_multipla ?? null,
+      tipo_pergunta: r?.tipo_pergunta ?? p.tipo,
       respondido_em: r?.respondido_em ?? null,
     };
   });

@@ -12,6 +12,9 @@ type Pergunta = {
   texto: string;
   peso: number;
   ativa: boolean;
+  tipo: string;
+  opcoes: any;
+  config_escala: any;
 };
 
 type QPRow = {
@@ -40,7 +43,7 @@ export async function GET(
   // Busca as perguntas ativas vinculadas a esse questionário
   const { data: qps, error: e2 } = await admin
     .from('questionario_perguntas')
-    .select('perguntas!inner(id, texto, peso, ativa)')
+    .select('perguntas!inner(id, texto, peso, ativa, tipo, opcoes, config_escala)')
     .eq('questionario_id', q.id)
     .eq('perguntas.ativa', true)
     .returns<QPRow[]>();

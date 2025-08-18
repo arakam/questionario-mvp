@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import PerguntaEscala from '@/components/PerguntaEscala';
+import PerguntaMultiplaEscolha from '@/components/PerguntaMultiplaEscolha';
+import PerguntaTexto from '@/components/PerguntaTexto';
 
 type PessoaForm = {
   nome: string;
@@ -15,7 +18,15 @@ type PessoaForm = {
   ramo_atividade?: string;
 };
 
-type Pergunta = { id: string; texto: string; peso: number; categoria_id: string | null };
+type Pergunta = { 
+  id: string; 
+  texto: string; 
+  peso: number; 
+  categoria_id: string | null;
+  tipo: string;
+  opcoes: any;
+  config_escala: any;
+};
 
 const fadeUp = {
   initial: { opacity: 0, y: 10 },
@@ -52,17 +63,24 @@ export default function Page() {
   useEffect(() => {
     if (!slug) return;
     const run = async () => {
+      console.log('🔍 Carregando questionário:', slug);
       const r = await fetch(`/api/questionarios/${slug}`);
       const d = await r.json();
+      console.log('📊 Dados recebidos:', d);
+      
       if (d?.error || !d?.questionario) {
+        console.log('❌ Erro ou questionário não encontrado:', d?.error);
         setPhase('fim');
         return;
       }
+      
       setQ(d.questionario);
       // embaralha levemente para sensação dinâmica (mas estável por sessão):
       const base: Pergunta[] = (d.perguntas ?? []).slice();
+      console.log('📝 Perguntas carregadas:', base);
+      
       for (let i = base.length - 1; i > 0; i--) {
-        const j = (i * 9301 + 49297) % 233280 % (i + 1); // pseudo “determinístico”
+        const j = (i * 9301 + 49297) % 233280 % (i + 1); // pseudo "determinístico"
         [base[i], base[j]] = [base[j], base[i]];
       }
       setPerguntas(base);
@@ -71,14 +89,45 @@ export default function Page() {
     run();
   }, [slug]);
 
-  // Enter / teclas de atalho (Y/N) durante as perguntas
+  // Enter / teclas de atalho durante as perguntas
   useEffect(() => {
     if (phase !== 'perguntas') return;
     const onKey = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
-      if (k === 'y' || k === 's') responder(true);
-      if (k === 'n') responder(false);
-      if (k === 'enter') responder(true);
+      const perguntaAtual = fila[idx];
+      
+      if (!perguntaAtual) return;
+      
+      // Atalhos específicos por tipo de pergunta
+      switch (perguntaAtual.tipo) {
+        case 'sim_nao':
+          if (k === 'y' || k === 's') responder(true);
+          if (k === 'n') responder(false);
+          if (k === 'enter') responder(true);
+          break;
+        case 'escala':
+          // Para escala, Enter confirma a resposta atual
+          if (k === 'enter') {
+            // Implementar confirmação da escala
+          }
+          break;
+        case 'multipla_escolha_unica':
+        case 'multipla_escolha_multipla':
+          // Para múltipla escolha, Enter confirma a seleção
+          if (k === 'enter') {
+            // Implementar confirmação da seleção
+          }
+          break;
+        case 'texto_curto':
+        case 'texto_longo':
+          // Para texto, Enter confirma o texto
+          if (k === 'enter') {
+            // Implementar confirmação do texto
+          }
+          break;
+      }
+      
+      // Navegação geral
       if (k === 'backspace' || k === 'arrowleft') setIdx(prev => Math.max(0, prev - 1));
     };
     window.addEventListener('keydown', onKey);
@@ -111,28 +160,56 @@ export default function Page() {
     setPhase('perguntas');
   };
 
-  const responder = useCallback(async (resposta: boolean) => {
+  const responder = useCallback(async (resposta: any) => {
     const atualLocal = fila[idx];
     if (!atualLocal) return;
+
+    console.log('🎯 Respondendo pergunta:', {
+      id: atualLocal.id,
+      tipo: atualLocal.tipo,
+      texto: atualLocal.texto,
+      resposta: resposta,
+      tipoResposta: typeof resposta
+    });
 
     // feedback tátil sutil (mobile)
     if ('vibrate' in navigator) try { (navigator as any).vibrate?.(10); } catch { /* noop */ }
 
-    await fetch('/api/respostas', {
-      method: 'POST',
-      body: JSON.stringify({
-        pessoa_id: pessoa.id,
-        questionario_id: q.id,
-        pergunta_id: atualLocal.id,
-        resposta,
-      }),
-    });
+    const dadosEnvio = {
+      pessoa_id: pessoa.id,
+      questionario_id: q.id,
+      pergunta_id: atualLocal.id,
+      tipo_pergunta: atualLocal.tipo,
+      resposta,
+    };
 
-    // transição para próxima
-    setTimeout(() => {
-      if (idx + 1 < fila.length) setIdx(idx + 1);
-      else setPhase('fim');
-    }, 60);
+    console.log('📤 Enviando dados para API:', dadosEnvio);
+
+    try {
+      const response = await fetch('/api/respostas', {
+        method: 'POST',
+        body: JSON.stringify(dadosEnvio),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Erro na API:', errorData);
+        alert('Erro ao salvar resposta. Tente novamente.');
+        return;
+      }
+
+      const result = await response.json();
+      console.log('✅ Resposta salva com sucesso:', result);
+
+      // transição para próxima
+      setTimeout(() => {
+        if (idx + 1 < fila.length) setIdx(idx + 1);
+        else setPhase('fim');
+      }, 60);
+    } catch (error) {
+      console.error('❌ Erro ao enviar resposta:', error);
+      alert('Erro ao salvar resposta. Tente novamente.');
+    }
   }, [fila, idx, pessoa, q]);
 
   // UI -----------------------------------------------------------------------------------------
@@ -270,37 +347,87 @@ export default function Page() {
         }
         footer={
           <p className="text-xs text-gray-500">
-            Dica: use as teclas <span className="font-medium">Y</span>/<span className="font-medium">N</span> (ou Enter) para responder rápido.
+            Dica: use as teclas de atalho conforme o tipo de pergunta.
           </p>
         }
       >
         <div className="flex flex-col gap-6 sm:gap-8">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={atual?.id ?? 'last'} {...slideQuestion}>
-              <h2 className="text-xl sm:text-2xl leading-tight font-medium">
-                {atual?.texto}
-              </h2>
+              {/* Debug info */}
+              {atual && (
+                <div className="text-xs text-gray-500 mb-4 p-2 bg-gray-100 rounded">
+                  <strong>Debug:</strong> ID: {atual.id} | Tipo: {atual.tipo || 'sim_nao'} | 
+                  Opções: {atual.opcoes ? 'Sim' : 'Não'} | 
+                  Escala: {atual.config_escala ? 'Sim' : 'Não'}
+                </div>
+              )}
+              
+              {/* Renderiza pergunta baseada no tipo */}
+              {atual?.tipo === 'escala' && atual?.config_escala && (
+                <PerguntaEscala
+                  pergunta={atual}
+                  onResponder={responder}
+                />
+              )}
+              
+              {(atual?.tipo === 'multipla_escolha_unica' || atual?.tipo === 'multipla_escolha_multipla') && atual?.opcoes && (
+                <PerguntaMultiplaEscolha
+                  pergunta={atual}
+                  onResponder={responder}
+                />
+              )}
+              
+              {(atual?.tipo === 'texto_curto' || atual?.tipo === 'texto_longo') && (
+                <PerguntaTexto
+                  pergunta={atual}
+                  onResponder={responder}
+                />
+              )}
+              
+              {/* Pergunta padrão Sim/Não ou fallback para tipos inválidos */}
+              {(!atual?.tipo || 
+                atual?.tipo === 'sim_nao' || 
+                (atual?.tipo === 'escala' && !atual?.config_escala) ||
+                ((atual?.tipo === 'multipla_escolha_unica' || atual?.tipo === 'multipla_escolha_multipla') && !atual?.opcoes)
+              ) && (
+                <>
+                  <h2 className="text-xl sm:text-2xl leading-tight font-medium text-center">
+                    {atual?.texto}
+                  </h2>
+
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <button
+                      onClick={() => responder(true)}
+                      className="group flex-1 rounded-2xl border px-4 py-4 sm:py-5 font-medium hover:shadow-md hover:-translate-y-0.5 transition-all"
+                    >
+                      <span className="inline-block mr-2">✅</span>
+                      Sim
+                      <span className="sr-only"> (atalho: Y/Enter)</span>
+                    </button>
+                    <button
+                      onClick={() => responder(false)}
+                      className="group flex-1 rounded-2xl border px-4 py-4 sm:py-5 font-medium hover:shadow-md hover:-translate-y-0.5 transition-all"
+                    >
+                      <span className="inline-block mr-2">❌</span>
+                      Não
+                      <span className="sr-only"> (atalho: N)</span>
+                    </button>
+                  </div>
+                  
+                  {/* Aviso se o tipo não foi configurado corretamente */}
+                  {atual?.tipo && atual?.tipo !== 'sim_nao' && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        ⚠️ Esta pergunta está configurada como "{atual.tipo}" mas não tem as configurações necessárias. 
+                        Exibindo como pergunta Sim/Não.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </motion.div>
           </AnimatePresence>
-
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <button
-              onClick={() => responder(true)}
-              className="group flex-1 rounded-2xl border px-4 py-4 sm:py-5 font-medium hover:shadow-md hover:-translate-y-0.5 transition-all"
-            >
-              <span className="inline-block mr-2">✅</span>
-              Sim
-              <span className="sr-only"> (atalho: Y/Enter)</span>
-            </button>
-            <button
-              onClick={() => responder(false)}
-              className="group flex-1 rounded-2xl border px-4 py-4 sm:py-5 font-medium hover:shadow-md hover:-translate-y-0.5 transition-all"
-            >
-              <span className="inline-block mr-2">❌</span>
-              Não
-              <span className="sr-only"> (atalho: N)</span>
-            </button>
-          </div>
         </div>
       </Shell>
     );
