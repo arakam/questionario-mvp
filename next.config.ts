@@ -62,6 +62,13 @@ const nextConfig = {
   ...(process.env.NODE_ENV === 'production' && {
     // Força o uso de HTTPS em produção
     assetPrefix: process.env.NEXT_PUBLIC_SITE_URL,
+    // Força URLs absolutas em produção
+    basePath: '',
+    // Configuração para evitar localhost em produção
+    env: {
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    },
   }),
 };
 
