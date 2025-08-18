@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSessionAndAdmin } from '@/lib/isAdmin';
 import SessionChecker from '@/components/SessionChecker';
+import MobileMenu from '@/components/MobileMenu';
 
 // Força o uso do Node.js runtime para evitar problemas com Edge Runtime
 export const runtime = 'nodejs';
@@ -106,11 +107,7 @@ export default async function AdminLayout({
         </aside>
 
         {/* Mobile Sidebar Toggle */}
-        <div className="lg:hidden fixed top-20 left-4 z-40">
-          <button className="p-2 bg-white rounded-lg shadow-md border border-gray-200">
-            <span className="text-gray-600">☰</span>
-          </button>
-        </div>
+        <MobileMenu />
 
         {/* Main Content */}
         <main className="flex-1 p-6 lg:p-8">
