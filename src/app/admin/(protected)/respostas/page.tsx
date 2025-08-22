@@ -1,5 +1,6 @@
 import { supabaseAdminOnly } from '@/lib/supabaseAdminOnly';
 import { getSessionAndAdmin } from '@/lib/isAdmin';
+import FiltroRespostas from './FiltroRespostas';
 
 // Força o uso do Node.js runtime para evitar problemas com Edge Runtime
 export const runtime = 'nodejs';
@@ -19,13 +20,26 @@ type ResumoRow = {
   ultima_resposta: string | null;
 };
 
-export default async function RespostasResumoPage() {
+export default async function RespostasResumoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ questionario?: string; search?: string }>;
+}) {
   const { isAdmin } = await getSessionAndAdmin();
   if (!isAdmin) return <div className="p-6 text-red-600">Acesso negado.</div>;
 
   const admin = supabaseAdminOnly();
+  const params = await searchParams;
 
-  // 1) Total de perguntas por questionário
+  // 1) Buscar todos os questionários para o filtro
+  const { data: questionarios, error: e2 } = await admin
+    .from('questionarios')
+    .select('id, nome, slug')
+    .order('nome', { ascending: true });
+
+  if (e2) return <div className="p-6 text-red-600">Erro ao buscar questionários: {e2.message}</div>;
+
+  // 2) Total de perguntas por questionário
   const { data: qp, error: e0 } = await admin
     .from('questionario_perguntas')
     .select('questionario_id, pergunta_id');
@@ -37,15 +51,21 @@ export default async function RespostasResumoPage() {
     totals.set(row.questionario_id, (totals.get(row.questionario_id) ?? 0) + 1);
   }
 
-  // 2) Respostas com joins (pessoas, questionarios)
-  const { data: resp, error: e1 } = await admin
+  // 3) Respostas com joins (pessoas, questionarios) e filtros
+  let query = admin
     .from('respostas')
-    .select('pessoa_id, questionario_id, respondido_em, pessoas(id, nome, email, cnpj), questionarios(id, nome)')
-    .order('respondido_em', { ascending: false });
+    .select('pessoa_id, questionario_id, respondido_em, pessoas(id, nome, email, cnpj), questionarios(id, nome)');
+
+  // Aplicar filtro por questionário se especificado
+  if (params.questionario) {
+    query = query.eq('questionario_id', params.questionario);
+  }
+
+  const { data: resp, error: e1 } = await query.order('respondido_em', { ascending: false });
 
   if (e1) return <div className="p-6 text-red-600">Erro: {e1.message}</div>;
 
-  // 3) Agrupar por (pessoa, questionario)
+  // 4) Agrupar por (pessoa, questionario)
   const map = new Map<string, (ResumoRow & { _ultima: number })>();
 
   for (const r of (resp ?? [])) {
@@ -83,13 +103,30 @@ export default async function RespostasResumoPage() {
     }
   }
 
-  const rows = Array.from(map.values())
+  let rows = Array.from(map.values())
     .sort((a, b) => (b._ultima - a._ultima))
     .map(({ _ultima, ...rest }) => rest);
+
+  // Aplicar filtro de busca por texto se especificado
+  if (params.search) {
+    const searchLower = params.search.toLowerCase();
+    rows = rows.filter(row => 
+      row.pessoa_nome.toLowerCase().includes(searchLower) ||
+      row.email.toLowerCase().includes(searchLower) ||
+      (row.cnpj && row.cnpj.toLowerCase().includes(searchLower)) ||
+      row.questionario_nome.toLowerCase().includes(searchLower)
+    );
+  }
 
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Respostas (Resumo)</h1>
+
+      {/* Filtros */}
+      <FiltroRespostas 
+        questionarios={questionarios || []} 
+        totalRespostas={rows.length}
+      />
 
       <div className="overflow-auto border rounded">
         <table className="min-w-[900px] w-full text-sm">
