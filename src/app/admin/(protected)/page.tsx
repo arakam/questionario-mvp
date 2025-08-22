@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { createSupabaseServer } from '@/lib/supabaseServer';
+import { supabaseAdminOnly } from '@/lib/supabaseAdminOnly';
 
 // Força o uso do Node.js runtime para evitar problemas com Edge Runtime
 export const runtime = 'nodejs';
@@ -7,19 +7,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const supabase = await createSupabaseServer();
+  const admin = supabaseAdminOnly();
 
-  // Busca estatísticas
+  // Busca estatísticas usando cliente admin (sem RLS)
   const [
     { count: categoriasCount },
     { count: perguntasCount },
     { count: questionariosCount },
     { count: respostasCount }
   ] = await Promise.all([
-    supabase.from('categorias').select('*', { count: 'exact', head: true }),
-    supabase.from('perguntas').select('*', { count: 'exact', head: true }),
-    supabase.from('questionarios').select('*', { count: 'exact', head: true }),
-    supabase.from('respostas').select('*', { count: 'exact', head: true })
+    admin.from('categorias').select('*', { count: 'exact', head: true }),
+    admin.from('perguntas').select('*', { count: 'exact', head: true }),
+    admin.from('questionarios').select('*', { count: 'exact', head: true }),
+    admin.from('respostas').select('*', { count: 'exact', head: true })
   ]);
 
   const stats = [
