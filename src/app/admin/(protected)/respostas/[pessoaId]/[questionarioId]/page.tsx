@@ -235,42 +235,105 @@ export default async function RespostasDetalhePage({
 
   // Função para renderizar diferentes tipos de resposta
   const renderizarResposta = (item: any) => {
-    if (item.resposta !== null) {
-      return item.resposta ? 'Sim' : 'Não';
+    // Debug: verificar o tipo de opcoes
+    if (item.tipo === 'multipla_escolha_unica' || item.tipo === 'multipla_escolha_multipla') {
+      console.log('Debug opcoes:', {
+        tipo: item.tipo,
+        opcoes: item.opcoes,
+        tipoOpcoes: typeof item.opcoes,
+        isArray: Array.isArray(item.opcoes)
+      });
+    }
+    // Verificar primeiro o tipo da pergunta para renderizar corretamente
+    switch (item.tipo) {
+      case 'sim_nao':
+        if (item.resposta !== null) {
+          return item.resposta ? 'Sim' : 'Não';
+        }
+        break;
+        
+      case 'escala':
+        if (item.resposta_escala !== null) {
+          return (
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{item.resposta_escala}</span>
+              {item.config_escala && (
+                <span className="text-xs text-gray-500">
+                  (escala {item.config_escala.escalaMin}-{item.config_escala.escalaMax})
+                </span>
+              )}
+            </div>
+          );
+        }
+        break;
+        
+      case 'multipla_escolha_unica':
+        if (item.resposta_multipla !== null && item.resposta_multipla.length > 0) {
+          // Verificar se opcoes é um array antes de usar find
+          if (Array.isArray(item.opcoes)) {
+            const opcao = item.opcoes.find((o: any) => o.valor === item.resposta_multipla[0]);
+            return opcao ? opcao.texto : item.resposta_multipla[0];
+          } else {
+            // Se opcoes não for array, retornar o valor direto
+            return item.resposta_multipla[0];
+          }
+        }
+        break;
+        
+      case 'multipla_escolha_multipla':
+        if (item.resposta_multipla !== null && item.resposta_multipla.length > 0) {
+          // Verificar se opcoes é um array antes de usar find
+          if (Array.isArray(item.opcoes)) {
+            const opcoes = item.resposta_multipla.map((valor: string) => {
+              const opcao = item.opcoes.find((o: any) => o.valor === valor);
+              return opcao ? opcao.texto : valor;
+            });
+            return (
+              <div className="space-y-1">
+                {opcoes.map((opcao: string, index: number) => (
+                  <div key={index} className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    {opcao}
+                  </div>
+                ))}
+              </div>
+            );
+          } else {
+            // Se opcoes não for array, retornar os valores diretos
+            return (
+              <div className="space-y-1">
+                {item.resposta_multipla.map((valor: string, index: number) => (
+                  <div key={index} className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    {valor}
+                  </div>
+                ))}
+              </div>
+            );
+          }
+        }
+        break;
+        
+      case 'texto_curto':
+      case 'texto_longo':
+        if (item.resposta_texto !== null) {
+          return (
+            <div className="max-w-xs">
+              <div className="text-sm bg-gray-100 p-2 rounded max-h-20 overflow-y-auto">
+                {item.resposta_texto}
+              </div>
+            </div>
+          );
+        }
+        break;
     }
     
+    // Fallback: verificar se há alguma resposta em campos específicos
     if (item.resposta_escala !== null) {
       return (
         <div className="flex items-center gap-2">
           <span className="font-medium">{item.resposta_escala}</span>
-          {item.config_escala && (
-            <span className="text-xs text-gray-500">
-              (escala {item.config_escala.escalaMin}-{item.config_escala.escalaMax})
-            </span>
-          )}
+          <span className="text-xs text-gray-500">(escala)</span>
         </div>
       );
-    }
-    
-    if (item.resposta_multipla !== null && item.resposta_multipla.length > 0) {
-      if (item.tipo === 'multipla_escolha_unica') {
-        const opcao = item.opcoes?.find((o: any) => o.valor === item.resposta_multipla[0]);
-        return opcao ? opcao.texto : item.resposta_multipla[0];
-      } else {
-        const opcoes = item.resposta_multipla.map((valor: string) => {
-          const opcao = item.opcoes?.find((o: any) => o.valor === valor);
-          return opcao ? opcao.texto : valor;
-        });
-        return (
-          <div className="space-y-1">
-            {opcoes.map((opcao: string, index: number) => (
-              <div key={index} className="text-sm bg-gray-100 px-2 py-1 rounded">
-                {opcao}
-              </div>
-            ))}
-          </div>
-        );
-      }
     }
     
     if (item.resposta_texto !== null) {
@@ -279,6 +342,18 @@ export default async function RespostasDetalhePage({
           <div className="text-sm bg-gray-100 p-2 rounded max-h-20 overflow-y-auto">
             {item.resposta_texto}
           </div>
+        </div>
+      );
+    }
+    
+    if (item.resposta_multipla !== null && item.resposta_multipla.length > 0) {
+      return (
+        <div className="space-y-1">
+          {item.resposta_multipla.map((valor: string, index: number) => (
+            <div key={index} className="text-sm bg-gray-100 px-2 py-1 rounded">
+              {valor}
+            </div>
+          ))}
         </div>
       );
     }
