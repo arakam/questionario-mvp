@@ -7,15 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PerguntaEscala from '@/components/PerguntaEscala';
 import PerguntaMultiplaEscolha from '@/components/PerguntaMultiplaEscolha';
 import PerguntaTexto from '@/components/PerguntaTexto';
+import { type CampoConfiguravel } from '@/components/ConfiguracaoCampos';
 
-type PessoaForm = {
+type Questionario = {
+  id: string;
   nome: string;
-  email: string;
-  telefone: string;
-  cnpj: string;
-  empresa?: string;
-  qtd_funcionarios?: number;
-  ramo_atividade?: string;
+  slug: string;
+  campos_configuraveis?: CampoConfiguravel[];
 };
 
 type Pergunta = { 
@@ -48,16 +46,43 @@ export default function Page() {
     return Array.isArray(v) ? v[0] : (v as string);
   }, [params]);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PessoaForm>();
-
   const [phase, setPhase] = useState<'carregando'|'dados'|'perguntas'|'fim'>('carregando');
   const [pessoa, setPessoa] = useState<any>(null);
-  const [q, setQ] = useState<any>(null);
+  const [q, setQ] = useState<Questionario | null>(null);
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [fila, setFila] = useState<Pergunta[]>([]);
   const [idx, setIdx] = useState(0);
   const atual = fila[idx];
   const progresso = fila.length ? Math.round(((idx) / fila.length) * 100) : 0;
+
+  // Campos padrão para validação
+  const camposPadrao: CampoConfiguravel[] = [
+    { id: 'nome', label: 'Nome', tipo: 'texto', obrigatorio: true, ordem: 1, placeholder: 'Digite seu nome completo' },
+    { id: 'email', label: 'E-mail', tipo: 'email', obrigatorio: true, ordem: 2, placeholder: 'seu@email.com' },
+    { id: 'telefone', label: 'Telefone', tipo: 'texto', obrigatorio: true, ordem: 3, placeholder: '(11) 99999-9999' },
+    { id: 'cnpj', label: 'CNPJ', tipo: 'texto', obrigatorio: true, ordem: 4, placeholder: '00.000.000/0000-00' },
+    { id: 'empresa', label: 'Empresa', tipo: 'texto', obrigatorio: false, ordem: 5, placeholder: 'Nome da empresa' },
+    { id: 'qtd_funcionarios', label: 'Quantidade de funcionários', tipo: 'numero', obrigatorio: false, ordem: 6, placeholder: '0' },
+    { id: 'ramo_atividade', label: 'Ramo de atividade', tipo: 'texto', obrigatorio: false, ordem: 7, placeholder: 'Ex: Tecnologia, Saúde, Educação' }
+  ];
+
+  // Campos configuráveis do questionário ou campos padrão
+  const campos = q?.campos_configuraveis || camposPadrao;
+  const camposOrdenados = [...campos].sort((a, b) => a.ordem - b.ordem);
+
+  // Cria o objeto de validação dinamicamente
+  const validationRules = useMemo(() => {
+    const rules: any = {};
+    camposOrdenados.forEach(campo => {
+      if (campo.obrigatorio) {
+        rules[campo.id] = { required: true };
+      }
+    });
+    return rules;
+  }, [camposOrdenados]);
+
+  // useForm sempre é chamado, independente da fase
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm(validationRules);
 
   // Carrega questionário + perguntas
   useEffect(() => {
@@ -135,7 +160,7 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, idx, fila, pessoa, q]);
 
-  const onSubmit = async (data: PessoaForm) => {
+  const onSubmit = async (data: any) => {
     const res = await fetch('/api/pessoas/upsert', { method: 'POST', body: JSON.stringify(data) });
     const p = await res.json();
     if (p?.error || !p?.id) {
@@ -147,7 +172,7 @@ export default function Page() {
     // Busca pendências (retomada)
     const pr = await fetch('/api/progresso', {
       method: 'POST',
-      body: JSON.stringify({ pessoa_id: p.id, questionario_id: q.id }),
+      body: JSON.stringify({ pessoa_id: p.id, questionario_id: q!.id }),
     });
     const prog = await pr.json();
 
@@ -177,7 +202,7 @@ export default function Page() {
 
     const dadosEnvio = {
       pessoa_id: pessoa.id,
-      questionario_id: q.id,
+      questionario_id: q!.id,
       pergunta_id: atualLocal.id,
       tipo_pergunta: atualLocal.tipo,
       resposta,
@@ -214,7 +239,7 @@ export default function Page() {
 
   // UI -----------------------------------------------------------------------------------------
 
-  // Tela “Carregando”
+  // Tela "Carregando"
   if (phase === 'carregando') {
     return (
       <div className="min-h-dvh grid place-items-center bg-gradient-to-b from-white to-gray-50">
@@ -274,6 +299,60 @@ export default function Page() {
 
   // Tela de dados pessoais (step 1)
   if (phase === 'dados') {
+    const renderCampo = (campo: CampoConfiguravel) => {
+      const baseClasses = "w-full border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60";
+      const errorClasses = errors[campo.id as keyof typeof errors] ? "border-red-500" : "";
+      
+      switch (campo.tipo) {
+        case 'email':
+          return (
+            <input
+              type="email"
+              className={`${baseClasses} ${errorClasses}`}
+              placeholder={campo.placeholder}
+              {...register(campo.id, { required: campo.obrigatorio })}
+            />
+          );
+        case 'numero':
+          return (
+            <input
+              type="number"
+              className={`${baseClasses} ${errorClasses}`}
+              placeholder={campo.placeholder}
+              min={campo.validacao?.min}
+              max={campo.validacao?.max}
+              {...register(campo.id, {
+                required: campo.obrigatorio,
+                valueAsNumber: true
+              })}
+            />
+          );
+        case 'select':
+          return (
+            <select
+              className={`${baseClasses} ${errorClasses}`}
+              {...register(campo.id, { required: campo.obrigatorio })}
+            >
+              <option value="">Selecione uma opção</option>
+              {campo.opcoes?.map((opcao: string, index: number) => (
+                <option key={index} value={opcao}>{opcao}</option>
+              ))}
+            </select>
+          );
+        default:
+          return (
+            <input
+              type="text"
+              className={`${baseClasses} ${errorClasses}`}
+              placeholder={campo.placeholder}
+              minLength={campo.validacao?.minLength}
+              maxLength={campo.validacao?.maxLength}
+              {...register(campo.id, { required: campo.obrigatorio })}
+            />
+          );
+      }
+    };
+
     return (
       <Shell>
         <AnimatePresence mode="wait">
@@ -283,44 +362,19 @@ export default function Page() {
             className="grid gap-3 sm:gap-4"
             onSubmit={handleSubmit(onSubmit)}
           >
-            <div className="grid gap-1.5">
-              <label className="text-sm text-gray-700">Nome <span className="text-red-500">*</span></label>
-              <input className="border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60" {...register('nome', { required: true })}/>
-            </div>
-            <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-4">
-              <div className="grid gap-1.5">
-                <label className="text-sm text-gray-700">E-mail <span className="text-red-500">*</span></label>
-                <input type="email" className="border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60" {...register('email', { required: true })}/>
+            {camposOrdenados.map((campo) => (
+              <div key={campo.id} className="grid gap-1.5">
+                <label className="text-sm text-gray-700">
+                  {campo.label} {campo.obrigatorio && <span className="text-red-500">*</span>}
+                </label>
+                {renderCampo(campo)}
+                {errors[campo.id as keyof typeof errors] && (
+                  <div className="text-sm text-red-600">
+                    Este campo é obrigatório.
+                  </div>
+                )}
               </div>
-              <div className="grid gap-1.5">
-                <label className="text-sm text-gray-700">Telefone <span className="text-red-500">*</span></label>
-                <input className="border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60" {...register('telefone', { required: true })}/>
-              </div>
-            </div>
-            <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-4">
-              <div className="grid gap-1.5">
-                <label className="text-sm text-gray-700">CNPJ <span className="text-red-500">*</span></label>
-                <input className="border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60" {...register('cnpj', { required: true })}/>
-              </div>
-              <div className="grid gap-1.5">
-                <label className="text-sm text-gray-700">Empresa</label>
-                <input className="border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60" {...register('empresa')}/>
-              </div>
-            </div>
-            <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-4">
-              <div className="grid gap-1.5">
-                <label className="text-sm text-gray-700">Qtd. funcionários</label>
-                <input type="number" className="border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60" {...register('qtd_funcionarios', { valueAsNumber: true })}/>
-              </div>
-              <div className="grid gap-1.5">
-                <label className="text-sm text-gray-700">Ramo de atividade</label>
-                <input className="border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-black/60" {...register('ramo_atividade')}/>
-              </div>
-            </div>
-
-            {(errors.nome || errors.email || errors.telefone || errors.cnpj) && (
-              <div className="text-sm text-red-600">Preencha os campos obrigatórios.</div>
-            )}
+            ))}
 
             <div className="pt-1">
               <button

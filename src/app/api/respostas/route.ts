@@ -48,23 +48,27 @@ export async function POST(req: NextRequest) {
       console.log('📝 Mapeando resposta sim_nao:', dadosResposta.resposta);
       break;
     case 'escala':
-      dadosResposta.resposta = resposta as number; // Para escala, salva também em resposta
+      // Para escala, salva APENAS em resposta_escala, deixa resposta como null
+      dadosResposta.resposta = null;
       dadosResposta.resposta_escala = resposta as number;
       console.log('📝 Mapeando resposta escala:', dadosResposta.resposta_escala);
       break;
     case 'texto_curto':
     case 'texto_longo':
-      dadosResposta.resposta = resposta as string; // Para texto, salva também em resposta
+      // Para texto, salva APENAS em resposta_texto, deixa resposta como null
+      dadosResposta.resposta = null;
       dadosResposta.resposta_texto = resposta as string;
       console.log('📝 Mapeando resposta texto:', dadosResposta.resposta_texto);
       break;
     case 'multipla_escolha_unica':
-      dadosResposta.resposta = resposta as string; // Para múltipla escolha única, salva também em resposta
+      // Para múltipla escolha única, salva APENAS em resposta_multipla, deixa resposta como null
+      dadosResposta.resposta = null;
       dadosResposta.resposta_multipla = [resposta as string];
       console.log('📝 Mapeando resposta múltipla única:', dadosResposta.resposta_multipla);
       break;
     case 'multipla_escolha_multipla':
-      dadosResposta.resposta = JSON.stringify(resposta); // Para múltipla escolha múltipla, converte para string
+      // Para múltipla escolha múltipla, salva APENAS em resposta_multipla, deixa resposta como null
+      dadosResposta.resposta = null;
       dadosResposta.resposta_multipla = resposta as string[];
       console.log('📝 Mapeando resposta múltipla múltipla:', dadosResposta.resposta_multipla);
       break;

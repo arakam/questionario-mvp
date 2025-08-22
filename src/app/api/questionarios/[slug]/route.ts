@@ -5,12 +5,14 @@ type Questionario = {
   id: string;
   nome: string;
   slug: string;
+  campos_configuraveis?: any;
 };
 
 type Pergunta = {
   id: string;
   texto: string;
   peso: number;
+  categoria_id: string | null;
   ativa: boolean;
   tipo: string;
   opcoes: any;
@@ -32,7 +34,7 @@ export async function GET(
   // Busca o questionário pelo slug
   const { data: q, error: e1 } = await admin
     .from('questionarios')
-    .select('id, nome, slug')
+    .select('id, nome, slug, campos_configuraveis')
     .eq('slug', slug)
     .single<Questionario>();
 
