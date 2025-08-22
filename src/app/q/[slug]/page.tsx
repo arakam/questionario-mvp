@@ -161,7 +161,16 @@ export default function Page() {
   }, [phase, idx, fila, pessoa, q]);
 
   const onSubmit = async (data: any) => {
-    const res = await fetch('/api/pessoas/upsert', { method: 'POST', body: JSON.stringify(data) });
+    // Adicionar questionario_id aos dados pessoais
+    const dadosComQuestionario = {
+      ...data,
+      questionario_id: q!.id
+    };
+    
+    const res = await fetch('/api/pessoas/upsert', { 
+      method: 'POST', 
+      body: JSON.stringify(dadosComQuestionario) 
+    });
     const p = await res.json();
     if (p?.error || !p?.id) {
       alert('Erro ao salvar seus dados.');

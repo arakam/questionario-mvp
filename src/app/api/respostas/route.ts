@@ -37,40 +37,48 @@ export async function POST(req: NextRequest) {
     pessoa_id,
     questionario_id,
     pergunta_id,
-    tipo_pergunta,
-    resposta: null // Inicializa com null, será preenchido baseado no tipo
+    tipo_pergunta
   };
 
   // Mapear resposta para o campo correto baseado no tipo
+  // IMPORTANTE: O campo 'resposta' deve sempre ter um valor válido para evitar constraint NOT NULL
   switch (tipo_pergunta) {
     case 'sim_nao':
       dadosResposta.resposta = resposta as boolean;
       console.log('📝 Mapeando resposta sim_nao:', dadosResposta.resposta);
       break;
+      
     case 'escala':
-      // Para escala, salva APENAS em resposta_escala, deixa resposta como null
-      dadosResposta.resposta = null;
+      // Para escala, salva em resposta_escala E também em resposta (como string para compatibilidade)
+      dadosResposta.resposta = (resposta as number).toString(); // Converte para string para evitar constraint
       dadosResposta.resposta_escala = resposta as number;
       console.log('📝 Mapeando resposta escala:', dadosResposta.resposta_escala);
+      console.log('📝 Resposta principal (string):', dadosResposta.resposta);
       break;
+      
     case 'texto_curto':
     case 'texto_longo':
-      // Para texto, salva APENAS em resposta_texto, deixa resposta como null
-      dadosResposta.resposta = null;
+      // Para texto, salva em resposta_texto E também em resposta
+      dadosResposta.resposta = resposta as string;
       dadosResposta.resposta_texto = resposta as string;
       console.log('📝 Mapeando resposta texto:', dadosResposta.resposta_texto);
+      console.log('📝 Resposta principal:', dadosResposta.resposta);
       break;
+      
     case 'multipla_escolha_unica':
-      // Para múltipla escolha única, salva APENAS em resposta_multipla, deixa resposta como null
-      dadosResposta.resposta = null;
+      // Para múltipla escolha única, salva em resposta_multipla E também em resposta
+      dadosResposta.resposta = resposta as string;
       dadosResposta.resposta_multipla = [resposta as string];
       console.log('📝 Mapeando resposta múltipla única:', dadosResposta.resposta_multipla);
+      console.log('📝 Resposta principal:', dadosResposta.resposta);
       break;
+      
     case 'multipla_escolha_multipla':
-      // Para múltipla escolha múltipla, salva APENAS em resposta_multipla, deixa resposta como null
-      dadosResposta.resposta = null;
+      // Para múltipla escolha múltipla, salva em resposta_multipla E também em resposta (JSON string)
+      dadosResposta.resposta = JSON.stringify(resposta as string[]);
       dadosResposta.resposta_multipla = resposta as string[];
       console.log('📝 Mapeando resposta múltipla múltipla:', dadosResposta.resposta_multipla);
+      console.log('📝 Resposta principal (JSON string):', dadosResposta.resposta);
       break;
   }
 

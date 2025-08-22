@@ -5,10 +5,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Validação básica - deve ter pelo menos nome e email
-    if (!body.nome || !body.email) {
+    // Validação básica - deve ter pelo menos nome, email e questionario_id
+    if (!body.nome || !body.email || !body.questionario_id) {
       return NextResponse.json({ 
-        error: 'Nome e email são obrigatórios' 
+        error: 'Nome, email e questionario_id são obrigatórios' 
       }, { status: 400 });
     }
 
@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
     // Limpar dados vazios para evitar problemas com constraints
     const dadosLimpos: any = {
       nome: body.nome.trim(),
-      email: body.email.trim().toLowerCase()
+      email: body.email.trim().toLowerCase(),
+      questionario_id: body.questionario_id
     };
 
     // Adicionar apenas campos que têm valor
@@ -50,27 +51,31 @@ export async function POST(req: NextRequest) {
     console.log('📤 Dados limpos para inserção:', dadosLimpos);
 
     const admin = supabaseAdmin();
-    const { email } = dadosLimpos;
+    const { email, questionario_id } = dadosLimpos;
 
-    // Procura por email (assumindo que email é único por pessoa)
+    // IMPORTANTE: Buscar por email + questionario_id, não apenas por email
+    // Uma pessoa pode responder múltiplos questionários
     const { data: found, error: findErr } = await admin
       .from('pessoas')
       .select('*')
       .eq('email', email)
-      .maybeSingle();
+      .eq('questionario_id', questionario_id)
+      .maybeSingle(); // Usar maybeSingle pois deve haver no máximo 1 registro por email+questionario
 
     if (findErr) {
       console.error('❌ Erro ao buscar pessoa:', findErr);
       return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
     }
 
-    // Se encontrou, retorna a pessoa existente
+    // Se encontrou, retorna a pessoa existente para este questionário
     if (found) {
-      console.log('✅ Pessoa encontrada:', found.id);
+      console.log('✅ Pessoa encontrada para este questionário:', found.id);
       return NextResponse.json(found);
     }
 
-    // Cria nova pessoa com os dados limpos
+    // Se não encontrou, cria nova pessoa para este questionário
+    console.log('🆕 Criando nova pessoa para este questionário...');
+    
     const { data: created, error: insErr } = await admin
       .from('pessoas')
       .insert(dadosLimpos)
@@ -84,7 +89,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('✅ Nova pessoa criada:', created.id);
+    console.log('✅ Nova pessoa criada para este questionário:', created.id);
     return NextResponse.json(created);
 
   } catch (error) {
