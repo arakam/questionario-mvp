@@ -13,7 +13,8 @@ const camposPadrao: CampoConfiguravel[] = [
     tipo: 'texto',
     obrigatorio: true,
     ordem: 1,
-    placeholder: 'Digite seu nome completo'
+    placeholder: 'Digite seu nome completo',
+    campoVerificacao: false
   },
   {
     id: 'email',
@@ -21,23 +22,26 @@ const camposPadrao: CampoConfiguravel[] = [
     tipo: 'email',
     obrigatorio: true,
     ordem: 2,
-    placeholder: 'seu@email.com'
+    placeholder: 'seu@email.com',
+    campoVerificacao: true // Por padrão, email é o campo de verificação
   },
   {
     id: 'telefone',
     label: 'Telefone',
-    tipo: 'texto',
-    obrigatorio: true,
+    tipo: 'telefone',
+    obrigatorio: false,
     ordem: 3,
-    placeholder: '(11) 99999-9999'
+    placeholder: '(11) 99999-9999',
+    campoVerificacao: false
   },
   {
     id: 'cnpj',
     label: 'CNPJ',
     tipo: 'texto',
-    obrigatorio: true,
+    obrigatorio: false,
     ordem: 4,
-    placeholder: '00.000.000/0000-00'
+    placeholder: '00.000.000/0000-00',
+    campoVerificacao: false
   },
   {
     id: 'empresa',
@@ -45,7 +49,8 @@ const camposPadrao: CampoConfiguravel[] = [
     tipo: 'texto',
     obrigatorio: false,
     ordem: 5,
-    placeholder: 'Nome da empresa'
+    placeholder: 'Nome da empresa',
+    campoVerificacao: false
   },
   {
     id: 'qtd_funcionarios',
@@ -53,7 +58,8 @@ const camposPadrao: CampoConfiguravel[] = [
     tipo: 'numero',
     obrigatorio: false,
     ordem: 6,
-    placeholder: '0'
+    placeholder: '0',
+    campoVerificacao: false
   },
   {
     id: 'ramo_atividade',
@@ -61,7 +67,8 @@ const camposPadrao: CampoConfiguravel[] = [
     tipo: 'texto',
     obrigatorio: false,
     ordem: 7,
-    placeholder: 'Ex: Tecnologia, Saúde, Educação'
+    placeholder: 'Ex: Tecnologia, Saúde, Educação',
+    campoVerificacao: false
   }
 ];
 

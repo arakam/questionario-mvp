@@ -18,6 +18,7 @@ export type CampoConfiguravel = {
     maxLength?: number;
     pattern?: string;
   };
+  campoVerificacao?: boolean; // Indica se este campo é usado para verificação de duplicatas
 };
 
 type Props = {
@@ -55,6 +56,7 @@ export default function ConfiguracaoCampos({ campos, onChange }: Props) {
       obrigatorio: false,
       ordem: camposLocais.length + 1,
       placeholder: 'Digite aqui...',
+      campoVerificacao: false,
     };
     
     const novosCampos = [...camposLocais, novoCampo];
@@ -307,6 +309,22 @@ export default function ConfiguracaoCampos({ campos, onChange }: Props) {
                         Campo obrigatório
                       </label>
                     </div>
+
+                    {/* Campo de verificação - apenas para email e telefone */}
+                    {(campo.tipo === 'email' || campo.tipo === 'telefone') && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`verificacao_${index}`}
+                          checked={campo.campoVerificacao || false}
+                          onChange={(e) => atualizarCampo(index, { campoVerificacao: e.target.checked })}
+                          className="rounded"
+                        />
+                        <label htmlFor={`verificacao_${index}`} className="text-sm text-gray-700">
+                          🔍 Campo de verificação de duplicatas
+                        </label>
+                      </div>
+                    )}
 
                     {campo.tipo === 'numero' && (
                       <>

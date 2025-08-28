@@ -5,27 +5,85 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Validação básica - deve ter pelo menos nome, email e questionario_id
-    if (!body.nome || !body.email || !body.questionario_id) {
+    console.log('📥 Dados recebidos:', body);
+    
+    // Validação básica - deve ter pelo menos nome e questionario_id
+    if (!body.nome || !body.questionario_id) {
+      console.log('❌ Validação básica falhou:', { nome: !!body.nome, questionario_id: !!body.questionario_id });
       return NextResponse.json({ 
-        error: 'Nome, email e questionario_id são obrigatórios' 
+        error: 'Nome e questionario_id são obrigatórios' 
       }, { status: 400 });
     }
 
-    // Validação de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
+    // Buscar configuração do questionário para validações específicas
+    const admin = supabaseAdmin();
+    const { data: questionario, error: qErr } = await admin
+      .from('questionarios')
+      .select('campos_configuraveis')
+      .eq('id', body.questionario_id)
+      .single();
+
+    if (qErr) {
+      console.error('❌ Erro ao buscar configuração do questionário:', qErr);
+      return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    }
+
+    // Verificar qual campo é obrigatório baseado na configuração
+    const camposConfig = questionario?.campos_configuraveis || [];
+    const campoVerificacao = camposConfig.find((campo: any) => campo.campoVerificacao);
+    
+    console.log('🔧 Configuração do questionário:', {
+      camposConfig,
+      campoVerificacao,
+      body: { nome: !!body.nome, email: !!body.email, telefone: !!body.telefone }
+    });
+    
+    // Se telefone é o campo de verificação, ele é obrigatório
+    if (campoVerificacao && campoVerificacao.tipo === 'telefone' && !body.telefone) {
+      console.log('❌ Telefone obrigatório (campo de verificação):', { campoVerificacao, telefone: !!body.telefone });
       return NextResponse.json({ 
-        error: 'Formato de email inválido' 
+        error: 'Telefone é obrigatório para este questionário (campo de verificação)' 
       }, { status: 400 });
     }
+    
+    // Se email é o campo de verificação, ele é obrigatório
+    if (campoVerificacao && campoVerificacao.tipo === 'email' && !body.email) {
+      console.log('❌ Email obrigatório (campo de verificação):', { campoVerificacao, email: !!body.email });
+      return NextResponse.json({ 
+        error: 'Email é obrigatório para este questionário (campo de verificação)' 
+      }, { status: 400 });
+    }
+    
+    // Se não há campo de verificação configurado, permitir telefone ou email
+    if (!campoVerificacao && !body.email && !body.telefone) {
+      console.log('❌ Nenhum campo de identificação fornecido:', { campoVerificacao, email: !!body.email, telefone: !!body.telefone });
+      return NextResponse.json({ 
+        error: 'É necessário fornecer email ou telefone para este questionário' 
+      }, { status: 400 });
+    }
+    
+    // Validação de email apenas se ele foi fornecido
+    if (body.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(body.email)) {
+        return NextResponse.json({ 
+          error: 'Formato de email inválido' 
+        }, { status: 400 });
+      }
+    }
+
+
 
     // Limpar dados vazios para evitar problemas com constraints
     const dadosLimpos: any = {
       nome: body.nome.trim(),
-      email: body.email.trim().toLowerCase(),
       questionario_id: body.questionario_id
     };
+
+    // Adicionar email apenas se fornecido
+    if (body.email && body.email.trim()) {
+      dadosLimpos.email = body.email.trim().toLowerCase();
+    }
 
     // Adicionar apenas campos que têm valor
     if (body.telefone && body.telefone.trim()) {
@@ -50,17 +108,46 @@ export async function POST(req: NextRequest) {
 
     console.log('📤 Dados limpos para inserção:', dadosLimpos);
 
-    const admin = supabaseAdmin();
-    const { email, questionario_id } = dadosLimpos;
+    const { questionario_id } = dadosLimpos;
 
-    // IMPORTANTE: Buscar por email + questionario_id, não apenas por email
-    // Uma pessoa pode responder múltiplos questionários
+    // Usar as variáveis já definidas acima
+    let campoValor: string;
+    let campoNome: string;
+    
+    if (campoVerificacao && campoVerificacao.tipo === 'telefone' && dadosLimpos.telefone) {
+      // Usar telefone como campo de verificação
+      campoValor = dadosLimpos.telefone;
+      campoNome = 'telefone';
+      console.log('🔍 Usando telefone como campo de verificação:', campoValor);
+    } else if (campoVerificacao && campoVerificacao.tipo === 'email' && dadosLimpos.email) {
+      // Usar email como campo de verificação
+      campoValor = dadosLimpos.email;
+      campoNome = 'email';
+      console.log('🔍 Usando email como campo de verificação:', campoValor);
+    } else if (dadosLimpos.email) {
+      // Fallback para email se disponível
+      campoValor = dadosLimpos.email;
+      campoNome = 'email';
+      console.log('🔍 Usando email como campo de verificação (fallback):', campoValor);
+    } else if (dadosLimpos.telefone) {
+      // Fallback para telefone se disponível
+      campoValor = dadosLimpos.telefone;
+      campoNome = 'telefone';
+      console.log('🔍 Usando telefone como campo de verificação (fallback):', campoValor);
+    } else {
+      // Último fallback - usar nome (não ideal, mas funcional)
+      campoValor = dadosLimpos.nome;
+      campoNome = 'nome';
+      console.log('🔍 Usando nome como campo de verificação (fallback):', campoValor);
+    }
+
+    // Buscar por campo de verificação + questionario_id
     const { data: found, error: findErr } = await admin
       .from('pessoas')
       .select('*')
-      .eq('email', email)
+      .eq(campoNome, campoValor)
       .eq('questionario_id', questionario_id)
-      .maybeSingle(); // Usar maybeSingle pois deve haver no máximo 1 registro por email+questionario
+      .maybeSingle();
 
     if (findErr) {
       console.error('❌ Erro ao buscar pessoa:', findErr);
@@ -69,12 +156,12 @@ export async function POST(req: NextRequest) {
 
     // Se encontrou, retorna a pessoa existente para este questionário
     if (found) {
-      console.log('✅ Pessoa encontrada para este questionário:', found.id);
+      console.log(`✅ Pessoa encontrada para este questionário usando ${campoNome}:`, found.id);
       return NextResponse.json(found);
     }
 
     // Se não encontrou, cria nova pessoa para este questionário
-    console.log('🆕 Criando nova pessoa para este questionário...');
+    console.log(`🆕 Criando nova pessoa para este questionário (verificação por ${campoNome})...`);
     
     const { data: created, error: insErr } = await admin
       .from('pessoas')
@@ -89,7 +176,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('✅ Nova pessoa criada para este questionário:', created.id);
+    console.log(`✅ Nova pessoa criada para este questionário (verificação por ${campoNome}):`, created.id);
     return NextResponse.json(created);
 
   } catch (error) {

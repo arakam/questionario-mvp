@@ -117,6 +117,18 @@ export default async function RespostasDetalhePage({
   }>();
   
   for (const r of (resp ?? [])) {
+    // Debug: verificar o que está vindo na resposta
+    console.log('Debug resposta individual:', {
+      pergunta_id: r.pergunta_id,
+      resposta: r.resposta,
+      tipo_resposta: typeof r.resposta,
+      resposta_texto: r.resposta_texto,
+      resposta_escala: r.resposta_escala,
+      resposta_multipla: r.resposta_multipla,
+      tipo_pergunta: r.tipo_pergunta,
+      respondido_em: r.respondido_em
+    });
+
     mapResp.set(r.pergunta_id, { 
       resposta: r.resposta, 
       resposta_texto: r.resposta_texto,
@@ -129,7 +141,7 @@ export default async function RespostasDetalhePage({
 
   const itens = perguntas.map((p) => {
     const r = mapResp.get(p.id);
-    return {
+    const item = {
       pergunta_id: p.id,
       texto: p.texto,
       peso: p.peso,
@@ -144,6 +156,20 @@ export default async function RespostasDetalhePage({
       tipo_pergunta: r?.tipo_pergunta ?? p.tipo,
       respondido_em: r?.respondido_em ?? null,
     };
+
+    // Debug: verificar cada item mapeado
+    if (p.tipo === 'sim_nao') {
+      console.log('🔍 Item sim/não mapeado:', {
+        texto: p.texto,
+        tipo: p.tipo,
+        peso: p.peso,
+        resposta: r?.resposta,
+        tipo_resposta: typeof r?.resposta,
+        tem_resposta: r !== undefined
+      });
+    }
+
+    return item;
   });
 
   const respondidas = itens.filter((i) => i.resposta !== null || i.resposta_texto !== null || i.resposta_escala !== null || i.resposta_multipla !== null).length;
@@ -155,22 +181,132 @@ export default async function RespostasDetalhePage({
   
   // Peso das respostas SIM (apenas para perguntas sim/não)
   const pesoRespostasSim = itens.reduce((sum, item) => {
-    if (item.tipo === 'sim_nao' && item.resposta === true) {
-      return sum + item.peso;
+    // Verificar se é pergunta sim/não E se tem resposta SIM
+    if (item.tipo === 'sim_nao') {
+      console.log('🔍 Analisando item sim/não para SIM:', {
+        texto: item.texto,
+        peso: item.peso,
+        resposta: item.resposta,
+        resposta_texto: item.resposta_texto,
+        resposta_escala: item.resposta_escala
+      });
+
+      // Tentar diferentes campos para encontrar a resposta
+      let temRespostaSim = false;
+      
+      // Verificar campo resposta genérico
+      if (item.resposta === true) {
+        console.log('  ✅ Resposta SIM encontrada no campo resposta');
+        temRespostaSim = true;
+      }
+      // Verificar campo resposta_texto (pode conter "sim" ou "true")
+      else if (item.resposta_texto && (
+        item.resposta_texto.toLowerCase() === 'sim' || 
+        item.resposta_texto.toLowerCase() === 'true' ||
+        item.resposta_texto === '1'
+      )) {
+        console.log('  ✅ Resposta SIM encontrada no campo resposta_texto:', item.resposta_texto);
+        temRespostaSim = true;
+      }
+      // Verificar campo resposta_escala (pode ser 1 para sim)
+      else if (item.resposta_escala === 1) {
+        console.log('  ✅ Resposta SIM encontrada no campo resposta_escala:', item.resposta_escala);
+        temRespostaSim = true;
+      }
+      
+      if (temRespostaSim) {
+        console.log('✅ Item SIM encontrado:', { 
+          texto: item.texto, 
+          peso: item.peso, 
+          resposta: item.resposta,
+          resposta_texto: item.resposta_texto,
+          resposta_escala: item.resposta_escala
+        });
+        return sum + item.peso;
+      } else {
+        console.log('  ❌ Nenhuma resposta SIM encontrada para este item');
+      }
     }
     return sum;
   }, 0);
 
   // Peso das respostas NÃO (apenas para perguntas sim/não)
   const pesoRespostasNao = itens.reduce((sum, item) => {
-    if (item.tipo === 'sim_nao' && item.resposta === false) {
-      return sum + item.peso;
+    // Verificar se é pergunta sim/não E se tem resposta NÃO
+    if (item.tipo === 'sim_nao') {
+      // Tentar diferentes campos para encontrar a resposta
+      let temRespostaNao = false;
+      
+      // Verificar campo resposta genérico
+      if (item.resposta === false) {
+        temRespostaNao = true;
+      }
+      // Verificar campo resposta_texto (pode conter "não" ou "false")
+      else if (item.resposta_texto && (
+        item.resposta_texto.toLowerCase() === 'não' || 
+        item.resposta_texto.toLowerCase() === 'nao' ||
+        item.resposta_texto.toLowerCase() === 'false' ||
+        item.resposta_texto === '0'
+      )) {
+        temRespostaNao = true;
+      }
+      // Verificar campo resposta_escala (pode ser 0 para não)
+      else if (item.resposta_escala === 0) {
+        temRespostaNao = true;
+      }
+      
+      if (temRespostaNao) {
+        console.log('❌ Item NÃO encontrado:', { 
+          texto: item.texto, 
+          peso: item.peso, 
+          resposta: item.resposta,
+          resposta_texto: item.resposta_texto,
+          resposta_escala: item.resposta_escala
+        });
+        return sum + item.peso;
+      }
     }
     return sum;
   }, 0);
 
   // Percentual de aproveitamento geral
   const percentualAproveitamento = pesoTotalPossivel > 0 ? Math.round((pesoRespostasSim / pesoTotalPossivel) * 100) : 0;
+
+  // Debug: verificar o cálculo do percentual
+  console.log('Debug percentual:', {
+    pesoRespostasSim,
+    pesoTotalPossivel,
+    divisao: pesoTotalPossivel > 0 ? pesoRespostasSim / pesoTotalPossivel : 0,
+    percentualAproveitamento
+  });
+
+  // Debug: verificar os cálculos
+  console.log('Debug cálculos de peso:', {
+    totalItens: itens.length,
+    pesoTotalPossivel,
+    pesoRespostasSim,
+    pesoRespostasNao,
+    percentualAproveitamento,
+    itensSimNao: itens.filter(item => item.tipo === 'sim_nao').length,
+    itensComResposta: itens.filter(item => item.resposta !== null || item.resposta_texto !== null || item.resposta_escala !== null || item.resposta_multipla !== null).length
+  });
+
+  // Debug: verificar cada item sim/não individualmente
+  console.log('🔍 VERIFICAÇÃO DETALHADA DE CADA ITEM SIM/NÃO:');
+  itens.filter(item => item.tipo === 'sim_nao').forEach((item, index) => {
+    console.log(`Item ${index + 1}:`, {
+      texto: item.texto,
+      tipo: item.tipo,
+      peso: item.peso,
+      resposta: item.resposta,
+      tipo_resposta: typeof item.resposta,
+      resposta_texto: item.resposta_texto,
+      resposta_escala: item.resposta_escala,
+      resposta_multipla: item.resposta_multipla,
+      tipo_pergunta: item.tipo_pergunta,
+      tem_resposta: item.resposta !== null || item.resposta_texto !== null || item.resposta_escala !== null || item.resposta_multipla !== null
+    });
+  });
 
   // Cálculos por categoria
   const resumoPorCategoria: ResumoCategoria[] = [];
@@ -397,6 +533,20 @@ export default async function RespostasDetalhePage({
           <div className="text-sm text-purple-600 font-medium">Aproveitamento Geral</div>
           <div className="text-2xl font-bold text-purple-800">{percentualAproveitamento}%</div>
           <div className="text-xs text-purple-600">SIM ÷ Total Possível</div>
+        </div>
+      </div>
+
+      {/* Debug: Mostrar valores para verificação */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-yellow-800 mb-2">🔍 Debug - Valores dos Cálculos</h3>
+        <div className="text-xs text-yellow-700 space-y-1">
+          <div>Total de itens: {itens.length}</div>
+          <div>Peso total possível: {pesoTotalPossivel}</div>
+          <div>Peso respostas SIM: {pesoRespostasSim}</div>
+          <div>Peso respostas NÃO: {pesoRespostasNao}</div>
+          <div>Percentual aproveitamento: {percentualAproveitamento}%</div>
+          <div>Perguntas tipo sim/não: {itens.filter(item => item.tipo === 'sim_nao').length}</div>
+          <div>Perguntas com resposta: {itens.filter(item => item.resposta !== null || item.resposta_texto !== null || item.resposta_escala !== null || item.resposta_multipla !== null).length}</div>
         </div>
       </div>
 
