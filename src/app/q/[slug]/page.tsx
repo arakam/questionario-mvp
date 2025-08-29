@@ -46,6 +46,16 @@ export default function Page() {
     return Array.isArray(v) ? v[0] : (v as string);
   }, [params]);
 
+  // Adicionar atributo data-route ao body para esconder cabeçalho/rodapé
+  useEffect(() => {
+    document.body.setAttribute('data-route', 'questionario');
+    
+    // Limpar ao desmontar o componente
+    return () => {
+      document.body.removeAttribute('data-route');
+    };
+  }, []);
+
   const [phase, setPhase] = useState<'carregando'|'dados'|'perguntas'|'fim'>('carregando');
   const [pessoa, setPessoa] = useState<any>(null);
   const [q, setQ] = useState<Questionario | null>(null);
@@ -306,31 +316,21 @@ export default function Page() {
     );
   }
 
-  // Container comum
+  // Container comum - Sem cabeçalho, apenas conteúdo limpo
   const Shell: React.FC<{ children: React.ReactNode; header?: React.ReactNode; footer?: React.ReactNode }> = ({ children, header, footer }) => (
     <div className="min-h-dvh bg-gradient-to-b from-white to-gray-50">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight truncate">{q.nome}</h1>
-              <p className="text-xs sm:text-sm text-gray-500 truncate">Responda em poucos cliques</p>
-            </div>
-            {header}
+        {/* Progress bar (só nas perguntas/fim) */}
+        {(phase === 'perguntas' || phase === 'fim') && (
+          <div className="mb-6 h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-black"
+              initial={{ width: 0 }}
+              animate={{ width: `${progresso}%` }}
+              transition={{ type: 'tween', duration: 0.25 }}
+            />
           </div>
-          {/* Progress bar (só nas perguntas/fim) */}
-          {(phase === 'perguntas' || phase === 'fim') && (
-            <div className="mt-4 h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-black"
-                initial={{ width: 0 }}
-                animate={{ width: `${progresso}%` }}
-                transition={{ type: 'tween', duration: 0.25 }}
-              />
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Card */}
         <div className="rounded-2xl border bg-white shadow-sm p-5 sm:p-8">
@@ -408,6 +408,10 @@ export default function Page() {
             className="grid gap-3 sm:gap-4"
             onSubmit={handleSubmit(onSubmit)}
           >
+            {/* Título do questionário */}
+            <div className="text-center mb-4">
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{q.nome}</h1>
+            </div>
             {camposOrdenados.map((campo) => (
               <div key={campo.id} className="grid gap-1.5">
                 <label className="text-sm text-gray-700">
@@ -440,11 +444,6 @@ export default function Page() {
   if (phase === 'perguntas') {
     return (
       <Shell
-        header={
-          <div className="text-xs sm:text-sm text-gray-500">
-            {idx + 1} / {fila.length}
-          </div>
-        }
         footer={
           <p className="text-xs text-gray-500">
             Dica: use as teclas de atalho conforme o tipo de pergunta.
