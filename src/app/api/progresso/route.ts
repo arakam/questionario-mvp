@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
   if (qpErr) return NextResponse.json({ error: qpErr.message }, { status: 400 });
 
   const todos = new Set((qp ?? []).map((x: any) => x.pergunta_id));
+  const totalPerguntas = todos.size;
 
   const { data: resp, error: rErr } = await admin
     .from('respostas')
@@ -30,6 +31,14 @@ export async function POST(req: NextRequest) {
 
   for (const r of (resp ?? [])) todos.delete(r.pergunta_id);
   const faltam = Array.from(todos);
+  const respondidas = totalPerguntas - faltam.length;
+  const percentual = totalPerguntas > 0 ? Math.round((respondidas / totalPerguntas) * 100) : 0;
 
-  return NextResponse.json({ faltam });
+  return NextResponse.json({ 
+    faltam,
+    total: totalPerguntas,
+    respondidas,
+    percentual,
+    completo: faltam.length === 0
+  });
 }

@@ -178,18 +178,55 @@ export default function Page() {
     }
     setPessoa(p);
 
-    // Busca pendências (retomada)
-    const pr = await fetch('/api/progresso', {
-      method: 'POST',
-      body: JSON.stringify({ pessoa_id: p.id, questionario_id: q!.id }),
-    });
-    const prog = await pr.json();
+    // Verificar se a pessoa já respondeu este questionário
+    try {
+      const progressResponse = await fetch('/api/progresso', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          pessoa_id: p.id, 
+          questionario_id: q!.id 
+        }),
+      });
+      
+      if (progressResponse.ok) {
+        const progressData = await progressResponse.json();
+        console.log('📊 Progresso da pessoa:', progressData);
+        
+        // Se já respondeu todas as perguntas, mostrar mensagem e não permitir continuar
+        if (progressData.completo || progressData.respondidas === progressData.total) {
+          alert('Você já respondeu este questionário completamente. Não é possível respondê-lo novamente.');
+          setPhase('fim');
+          return;
+        }
+        
+        // Se já respondeu algumas perguntas, perguntar se quer continuar
+        if (progressData.respondidas > 0) {
+          const continuar = confirm(
+            `Você já respondeu ${progressData.respondidas} de ${progressData.total} perguntas deste questionário. Deseja continuar de onde parou?`
+          );
+          
+          if (!continuar) {
+            setPhase('fim');
+            return;
+          }
+          
+          // Carregar apenas perguntas não respondidas
+          const perguntasRestantes = perguntas.filter(per => progressData.faltam.includes(per.id));
+          console.log('🔄 Carregando perguntas restantes:', perguntasRestantes.length);
+          setFila(perguntasRestantes);
+          setIdx(0);
+          setPhase('perguntas');
+          return;
+        }
+      }
+    } catch (progressError) {
+      console.error('⚠️ Erro ao verificar progresso:', progressError);
+      // Continua com a lógica normal mesmo se falhar
+    }
 
-    const baseFila = Array.isArray(prog?.faltam) && prog.faltam.length
-      ? perguntas.filter(per => prog.faltam.includes(per.id))
-      : perguntas;
-
-    setFila(baseFila);
+    // Inicializa a fila com todas as perguntas (primeira vez respondendo)
+    console.log('📝 Inicializando fila com perguntas:', perguntas.length);
+    setFila(perguntas);
     setIdx(0);
     setPhase('perguntas');
   };
